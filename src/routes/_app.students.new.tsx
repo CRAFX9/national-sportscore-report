@@ -30,7 +30,7 @@ const schema = z.object({
   state: z.string().trim().min(1).max(80),
   parentName: z.string().trim().min(2).max(80),
   parentPhone: z.string().trim().regex(/^\+?[0-9\s-]{10,15}$/, "Enter a valid phone"),
-  medicalConditions: z.string().max(300).optional().default(""),
+  medicalConditions: z.string().max(300).optional(),
 });
 type FormV = z.infer<typeof schema>;
 
