@@ -11,6 +11,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Toaster } from "@/components/ui/sonner";
+import { useTheme } from "@/stores/theme";
+import { ensureSeed } from "@/lib/seed";
+import { isBrowser } from "@/lib/db";
 
 function NotFoundComponent() {
   return (
@@ -23,10 +27,10 @@ function NotFoundComponent() {
         </p>
         <div className="mt-6">
           <Link
-            to="/"
+            to="/dashboard"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Go to dashboard
           </Link>
         </div>
       </div>
@@ -76,21 +80,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { title: "NSRC — National Sports Report Card" },
+      {
+        name: "description",
+        content:
+          "NSRC is an offline-first sports assessment platform for Indian coaches, district officers, SAI officials and parents to run standardized athletic tests and generate digital scout reports.",
+      },
+      { name: "theme-color", content: "#1B3A8F" },
+      { property: "og:title", content: "NSRC — National Sports Report Card" },
+      {
+        property: "og:description",
+        content: "Offline-first sports talent assessment for India.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
@@ -116,11 +123,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const applyTheme = useTheme((s) => s.apply);
+
+  useEffect(() => {
+    applyTheme();
+    if (isBrowser) void ensureSeed();
+  }, [applyTheme]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="min-h-screen bg-background text-foreground">
+        <Outlet />
+      </div>
+      <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
 }

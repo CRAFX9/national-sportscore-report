@@ -9,38 +9,223 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSyncRouteImport } from './routes/_app.sync'
+import { Route as AppMeRouteImport } from './routes/_app.me'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppStudentsIndexRouteImport } from './routes/_app.students.index'
+import { Route as AppStudentsNewRouteImport } from './routes/_app.students.new'
+import { Route as AppProfileIdRouteImport } from './routes/_app.profile.$id'
+import { Route as AppAssessmentsProcessingRouteImport } from './routes/_app.assessments.processing'
+import { Route as AppAssessmentsNewRouteImport } from './routes/_app.assessments.new'
+import { Route as AppAssessmentsInstructionsRouteImport } from './routes/_app.assessments.instructions'
+import { Route as AppAssessmentsCaptureRouteImport } from './routes/_app.assessments.capture'
+import { Route as AppStudentsIdEditRouteImport } from './routes/_app.students.$id.edit'
+import { Route as AppAssessmentsResultsIdRouteImport } from './routes/_app.assessments.results.$id'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppSyncRoute = AppSyncRouteImport.update({
+  id: '/sync',
+  path: '/sync',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMeRoute = AppMeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentsIndexRoute = AppStudentsIndexRouteImport.update({
+  id: '/students/',
+  path: '/students/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentsNewRoute = AppStudentsNewRouteImport.update({
+  id: '/students/new',
+  path: '/students/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileIdRoute = AppProfileIdRouteImport.update({
+  id: '/profile/$id',
+  path: '/profile/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAssessmentsProcessingRoute =
+  AppAssessmentsProcessingRouteImport.update({
+    id: '/assessments/processing',
+    path: '/assessments/processing',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAssessmentsNewRoute = AppAssessmentsNewRouteImport.update({
+  id: '/assessments/new',
+  path: '/assessments/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAssessmentsInstructionsRoute =
+  AppAssessmentsInstructionsRouteImport.update({
+    id: '/assessments/instructions',
+    path: '/assessments/instructions',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppAssessmentsCaptureRoute = AppAssessmentsCaptureRouteImport.update({
+  id: '/assessments/capture',
+  path: '/assessments/capture',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudentsIdEditRoute = AppStudentsIdEditRouteImport.update({
+  id: '/students/$id/edit',
+  path: '/students/$id/edit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAssessmentsResultsIdRoute = AppAssessmentsResultsIdRouteImport.update({
+  id: '/assessments/results/$id',
+  path: '/assessments/results/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/me': typeof AppMeRoute
+  '/sync': typeof AppSyncRoute
+  '/assessments/capture': typeof AppAssessmentsCaptureRoute
+  '/assessments/instructions': typeof AppAssessmentsInstructionsRoute
+  '/assessments/new': typeof AppAssessmentsNewRoute
+  '/assessments/processing': typeof AppAssessmentsProcessingRoute
+  '/profile/$id': typeof AppProfileIdRoute
+  '/students/new': typeof AppStudentsNewRoute
+  '/students/': typeof AppStudentsIndexRoute
+  '/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
+  '/students/$id/edit': typeof AppStudentsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/me': typeof AppMeRoute
+  '/sync': typeof AppSyncRoute
+  '/assessments/capture': typeof AppAssessmentsCaptureRoute
+  '/assessments/instructions': typeof AppAssessmentsInstructionsRoute
+  '/assessments/new': typeof AppAssessmentsNewRoute
+  '/assessments/processing': typeof AppAssessmentsProcessingRoute
+  '/profile/$id': typeof AppProfileIdRoute
+  '/students/new': typeof AppStudentsNewRoute
+  '/students': typeof AppStudentsIndexRoute
+  '/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
+  '/students/$id/edit': typeof AppStudentsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/me': typeof AppMeRoute
+  '/_app/sync': typeof AppSyncRoute
+  '/_app/assessments/capture': typeof AppAssessmentsCaptureRoute
+  '/_app/assessments/instructions': typeof AppAssessmentsInstructionsRoute
+  '/_app/assessments/new': typeof AppAssessmentsNewRoute
+  '/_app/assessments/processing': typeof AppAssessmentsProcessingRoute
+  '/_app/profile/$id': typeof AppProfileIdRoute
+  '/_app/students/new': typeof AppStudentsNewRoute
+  '/_app/students/': typeof AppStudentsIndexRoute
+  '/_app/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
+  '/_app/students/$id/edit': typeof AppStudentsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/me'
+    | '/sync'
+    | '/assessments/capture'
+    | '/assessments/instructions'
+    | '/assessments/new'
+    | '/assessments/processing'
+    | '/profile/$id'
+    | '/students/new'
+    | '/students/'
+    | '/assessments/results/$id'
+    | '/students/$id/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/me'
+    | '/sync'
+    | '/assessments/capture'
+    | '/assessments/instructions'
+    | '/assessments/new'
+    | '/assessments/processing'
+    | '/profile/$id'
+    | '/students/new'
+    | '/students'
+    | '/assessments/results/$id'
+    | '/students/$id/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/dashboard'
+    | '/_app/me'
+    | '/_app/sync'
+    | '/_app/assessments/capture'
+    | '/_app/assessments/instructions'
+    | '/_app/assessments/new'
+    | '/_app/assessments/processing'
+    | '/_app/profile/$id'
+    | '/_app/students/new'
+    | '/_app/students/'
+    | '/_app/assessments/results/$id'
+    | '/_app/students/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +233,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/sync': {
+      id: '/_app/sync'
+      path: '/sync'
+      fullPath: '/sync'
+      preLoaderRoute: typeof AppSyncRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/me': {
+      id: '/_app/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof AppMeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/students/': {
+      id: '/_app/students/'
+      path: '/students'
+      fullPath: '/students/'
+      preLoaderRoute: typeof AppStudentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/students/new': {
+      id: '/_app/students/new'
+      path: '/students/new'
+      fullPath: '/students/new'
+      preLoaderRoute: typeof AppStudentsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile/$id': {
+      id: '/_app/profile/$id'
+      path: '/profile/$id'
+      fullPath: '/profile/$id'
+      preLoaderRoute: typeof AppProfileIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/assessments/processing': {
+      id: '/_app/assessments/processing'
+      path: '/assessments/processing'
+      fullPath: '/assessments/processing'
+      preLoaderRoute: typeof AppAssessmentsProcessingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/assessments/new': {
+      id: '/_app/assessments/new'
+      path: '/assessments/new'
+      fullPath: '/assessments/new'
+      preLoaderRoute: typeof AppAssessmentsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/assessments/instructions': {
+      id: '/_app/assessments/instructions'
+      path: '/assessments/instructions'
+      fullPath: '/assessments/instructions'
+      preLoaderRoute: typeof AppAssessmentsInstructionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/assessments/capture': {
+      id: '/_app/assessments/capture'
+      path: '/assessments/capture'
+      fullPath: '/assessments/capture'
+      preLoaderRoute: typeof AppAssessmentsCaptureRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/students/$id/edit': {
+      id: '/_app/students/$id/edit'
+      path: '/students/$id/edit'
+      fullPath: '/students/$id/edit'
+      preLoaderRoute: typeof AppStudentsIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/assessments/results/$id': {
+      id: '/_app/assessments/results/$id'
+      path: '/assessments/results/$id'
+      fullPath: '/assessments/results/$id'
+      preLoaderRoute: typeof AppAssessmentsResultsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppMeRoute: typeof AppMeRoute
+  AppSyncRoute: typeof AppSyncRoute
+  AppAssessmentsCaptureRoute: typeof AppAssessmentsCaptureRoute
+  AppAssessmentsInstructionsRoute: typeof AppAssessmentsInstructionsRoute
+  AppAssessmentsNewRoute: typeof AppAssessmentsNewRoute
+  AppAssessmentsProcessingRoute: typeof AppAssessmentsProcessingRoute
+  AppProfileIdRoute: typeof AppProfileIdRoute
+  AppStudentsNewRoute: typeof AppStudentsNewRoute
+  AppStudentsIndexRoute: typeof AppStudentsIndexRoute
+  AppAssessmentsResultsIdRoute: typeof AppAssessmentsResultsIdRoute
+  AppStudentsIdEditRoute: typeof AppStudentsIdEditRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppDashboardRoute: AppDashboardRoute,
+  AppMeRoute: AppMeRoute,
+  AppSyncRoute: AppSyncRoute,
+  AppAssessmentsCaptureRoute: AppAssessmentsCaptureRoute,
+  AppAssessmentsInstructionsRoute: AppAssessmentsInstructionsRoute,
+  AppAssessmentsNewRoute: AppAssessmentsNewRoute,
+  AppAssessmentsProcessingRoute: AppAssessmentsProcessingRoute,
+  AppProfileIdRoute: AppProfileIdRoute,
+  AppStudentsNewRoute: AppStudentsNewRoute,
+  AppStudentsIndexRoute: AppStudentsIndexRoute,
+  AppAssessmentsResultsIdRoute: AppAssessmentsResultsIdRoute,
+  AppStudentsIdEditRoute: AppStudentsIdEditRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
