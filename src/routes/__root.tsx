@@ -91,10 +91,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "NSRC — National Sports Report Card" },
       {
         property: "og:description",
-        content: "Offline-first sports talent assessment for India.",
+        content: "NSRC is an offline-first sports assessment platform for Indian coaches, district officers, SAI officials and parents to run standardized athletic tests and generate digital scout reports.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "NSRC — National Sports Report Card" },
+      { name: "twitter:description", content: "NSRC is an offline-first sports assessment platform for Indian coaches, district officers, SAI officials and parents to run standardized athletic tests and generate digital scout reports." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8d9aad4b-03d7-4e30-94d2-ee332239ef48/id-preview-4cbc477c--a9a4befb-626c-4162-9c31-85a332345731.lovable.app-1783948053371.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8d9aad4b-03d7-4e30-94d2-ee332239ef48/id-preview-4cbc477c--a9a4befb-626c-4162-9c31-85a332345731.lovable.app-1783948053371.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
