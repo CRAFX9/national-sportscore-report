@@ -20,6 +20,7 @@ function CapturePage() {
   const current = draft.selected[draft.currentIndex];
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [personDetected, setPersonDetected] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
