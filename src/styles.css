@@ -2,6 +2,23 @@
 @source "../src";
 @import "tw-animate-css";
 
+/* Hide the Lovable "Edit with Lovable" badge on all pages */
+[class*="lovable"],
+[id*="lovable"],
+[data-lovable],
+.lovable-badge,
+#lovable-badge,
+a[href*="lovable"],
+iframe[src*="lovable"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /*
