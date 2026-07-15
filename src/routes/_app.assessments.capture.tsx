@@ -26,21 +26,43 @@ function CapturePage() {
 
   useEffect(() => {
     let cancelled = false;
+    let detectTimer: ReturnType<typeof setInterval> | null = null;
+    let model: import("@tensorflow-models/coco-ssd").ObjectDetection | null = null;
+
     async function initCam() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
-        // Simulate AI person detection after camera warms up
-        setTimeout(() => { if (!cancelled) setPersonDetected(true); }, 1800);
+
+        // Load real on-device person detection (COCO-SSD via TensorFlow.js)
+        const [tf, cocoSsd] = await Promise.all([
+          import("@tensorflow/tfjs"),
+          import("@tensorflow-models/coco-ssd"),
+        ]);
+        await tf.ready();
+        if (cancelled) return;
+        model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
+        if (cancelled) return;
+
+        detectTimer = setInterval(async () => {
+          const v = videoRef.current;
+          if (!v || v.readyState < 2 || !model) return;
+          try {
+            const preds = await model.detect(v, 5);
+            const found = preds.some((p) => p.class === "person" && p.score >= 0.6);
+            if (!cancelled) setPersonDetected(found);
+          } catch { /* ignore per-frame errors */ }
+        }, 600);
       } catch {
-        /* camera not available — show placeholder */
+        /* camera not available — leave personDetected false */
       }
     }
     initCam();
     return () => {
       cancelled = true;
+      if (detectTimer) clearInterval(detectTimer);
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
