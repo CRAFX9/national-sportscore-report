@@ -32,6 +32,8 @@ function CapturePage() {
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
+        // Simulate AI person detection after camera warms up
+        setTimeout(() => { if (!cancelled) setPersonDetected(true); }, 1800);
       } catch {
         /* camera not available — show placeholder */
       }
