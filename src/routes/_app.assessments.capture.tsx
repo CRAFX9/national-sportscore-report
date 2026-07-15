@@ -21,6 +21,9 @@ function CapturePage() {
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [personDetected, setPersonDetected] = useState(false);
+  const [lightingOk, setLightingOk] = useState(false);
+  const [steady, setSteady] = useState(false);
+  const [frameOk, setFrameOk] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
