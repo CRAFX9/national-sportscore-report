@@ -20,6 +20,7 @@ function CapturePage() {
   const current = draft.selected[draft.currentIndex];
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [personDetected, setPersonDetected] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -31,6 +32,8 @@ function CapturePage() {
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
+        // Simulate AI person detection after camera warms up
+        setTimeout(() => { if (!cancelled) setPersonDetected(true); }, 1800);
       } catch {
         /* camera not available — show placeholder */
       }
@@ -103,7 +106,7 @@ function CapturePage() {
 
         {/* Top overlay chips */}
         <div className="absolute left-3 right-3 top-3 flex flex-wrap gap-1.5">
-          <QualityChip ok label="Person detected" />
+          <QualityChip ok={personDetected} label={personDetected ? "Person detected" : "Detecting person…"} />
           <QualityChip ok label="Lighting good" />
           <QualityChip ok={seconds < 2} label={seconds >= 2 && recording ? "Camera stable" : "Hold steady"} />
           <QualityChip ok label="Frame quality" />
@@ -124,8 +127,9 @@ function CapturePage() {
             </button>
           ) : (
             <button
-              onClick={() => { setSeconds(0); setRecording(true); }}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground text-primary elevation-3"
+              disabled={!personDetected}
+              onClick={() => { if (!personDetected) { toast.error("Waiting for person detection"); return; } setSeconds(0); setRecording(true); }}
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground text-primary elevation-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play className="h-7 w-7" />
             </button>
