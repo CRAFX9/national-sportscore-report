@@ -127,8 +127,9 @@ function CapturePage() {
             </button>
           ) : (
             <button
-              onClick={() => { setSeconds(0); setRecording(true); }}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground text-primary elevation-3"
+              disabled={!personDetected}
+              onClick={() => { if (!personDetected) { toast.error("Waiting for person detection"); return; } setSeconds(0); setRecording(true); }}
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground text-primary elevation-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play className="h-7 w-7" />
             </button>
