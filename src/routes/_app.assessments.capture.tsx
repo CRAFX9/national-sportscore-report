@@ -30,6 +30,7 @@ function CapturePage() {
   useEffect(() => {
     let cancelled = false;
     let detectTimer: ReturnType<typeof setInterval> | null = null;
+    let qualityTimer: ReturnType<typeof setInterval> | null = null;
     let model: import("@tensorflow-models/coco-ssd").ObjectDetection | null = null;
 
     async function initCam() {
@@ -39,7 +40,54 @@ function CapturePage() {
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
 
-        // Load real on-device person detection (COCO-SSD via TensorFlow.js)
+        // Frame-quality sampler: lighting, steadiness, sharpness
+        const canvas = document.createElement("canvas");
+        const W = 80, H = 60;
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        let prev: Uint8ClampedArray | null = null;
+
+        qualityTimer = setInterval(() => {
+          const v = videoRef.current;
+          if (!v || v.readyState < 2 || !ctx) return;
+          try {
+            ctx.drawImage(v, 0, 0, W, H);
+            const { data } = ctx.getImageData(0, 0, W, H);
+
+            let sum = 0;
+            for (let i = 0; i < data.length; i += 4) {
+              sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            }
+            const mean = sum / (W * H);
+            if (!cancelled) setLightingOk(mean >= 55 && mean <= 220);
+
+            let gsum = 0, gsq = 0, n = 0;
+            for (let y = 0; y < H; y++) {
+              for (let x = 1; x < W; x++) {
+                const i = (y * W + x) * 4;
+                const j = (y * W + x - 1) * 4;
+                const l1 = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                const l2 = 0.299 * data[j] + 0.587 * data[j + 1] + 0.114 * data[j + 2];
+                const g = l1 - l2;
+                gsum += g; gsq += g * g; n++;
+              }
+            }
+            const variance = gsq / n - (gsum / n) ** 2;
+            if (!cancelled) setFrameOk(variance > 40);
+
+            if (prev) {
+              let diff = 0;
+              for (let i = 0; i < data.length; i += 4) {
+                diff += Math.abs(data[i] - prev[i]);
+              }
+              const avgDiff = diff / (W * H);
+              if (!cancelled) setSteady(avgDiff < 12);
+            }
+            prev = new Uint8ClampedArray(data);
+          } catch { /* ignore */ }
+        }, 300);
+
+        // Load on-device person detection (COCO-SSD via TensorFlow.js)
         const [tf, cocoSsd] = await Promise.all([
           import("@tensorflow/tfjs"),
           import("@tensorflow-models/coco-ssd"),
@@ -58,64 +106,6 @@ function CapturePage() {
             if (!cancelled) setPersonDetected(found);
           } catch { /* ignore per-frame errors */ }
         }, 600);
-
-        // Frame-quality sampler: lighting, steadiness, sharpness
-        const canvas = document.createElement("canvas");
-        const W = 80, H = 60;
-        canvas.width = W; canvas.height = H;
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        let prev: Uint8ClampedArray | null = null;
-
-        const qTimer = setInterval(() => {
-          const v = videoRef.current;
-          if (!v || v.readyState < 2 || !ctx) return;
-          try {
-            ctx.drawImage(v, 0, 0, W, H);
-            const { data } = ctx.getImageData(0, 0, W, H);
-
-            // luminance
-            let sum = 0;
-            for (let i = 0; i < data.length; i += 4) {
-              sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-            }
-            const mean = sum / (W * H);
-            if (!cancelled) setLightingOk(mean >= 55 && mean <= 220);
-
-            // sharpness: horizontal gradient variance on luma
-            let gsum = 0, gsq = 0, n = 0;
-            for (let y = 0; y < H; y++) {
-              for (let x = 1; x < W; x++) {
-                const i = (y * W + x) * 4;
-                const j = (y * W + x - 1) * 4;
-                const l1 = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                const l2 = 0.299 * data[j] + 0.587 * data[j + 1] + 0.114 * data[j + 2];
-                const g = l1 - l2;
-                gsum += g; gsq += g * g; n++;
-              }
-            }
-            const variance = gsq / n - (gsum / n) ** 2;
-            if (!cancelled) setFrameOk(variance > 40);
-
-            // steadiness: mean abs diff vs previous frame
-            if (prev) {
-              let diff = 0;
-              for (let i = 0; i < data.length; i += 4) {
-                diff += Math.abs(data[i] - prev[i]);
-              }
-              const avgDiff = diff / (W * H);
-              if (!cancelled) setSteady(avgDiff < 12);
-            }
-            prev = new Uint8ClampedArray(data);
-          } catch { /* ignore */ }
-        }, 300);
-
-        // Extend cleanup for quality timer
-        const origCleanup = detectTimer;
-        detectTimer = { // wrap to allow clearing both
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any;
-        (detectTimer as unknown as { _q: ReturnType<typeof setInterval>; _d: ReturnType<typeof setInterval> })._q = qTimer;
-        (detectTimer as unknown as { _q: ReturnType<typeof setInterval>; _d: ReturnType<typeof setInterval> })._d = origCleanup!;
       } catch {
         /* camera not available */
       }
@@ -123,13 +113,8 @@ function CapturePage() {
     initCam();
     return () => {
       cancelled = true;
-      if (detectTimer) {
-        const wrap = detectTimer as unknown as { _q?: ReturnType<typeof setInterval>; _d?: ReturnType<typeof setInterval> };
-        if (wrap._q) clearInterval(wrap._q);
-        if (wrap._d) clearInterval(wrap._d);
-        // If it's a plain interval (early cleanup before quality sampler set up)
-        if (!wrap._q && !wrap._d) clearInterval(detectTimer as ReturnType<typeof setInterval>);
-      }
+      if (detectTimer) clearInterval(detectTimer);
+      if (qualityTimer) clearInterval(qualityTimer);
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
