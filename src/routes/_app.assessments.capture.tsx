@@ -106,7 +106,7 @@ function CapturePage() {
 
         {/* Top overlay chips */}
         <div className="absolute left-3 right-3 top-3 flex flex-wrap gap-1.5">
-          <QualityChip ok label="Person detected" />
+          <QualityChip ok={personDetected} label={personDetected ? "Person detected" : "Detecting person…"} />
           <QualityChip ok label="Lighting good" />
           <QualityChip ok={seconds < 2} label={seconds >= 2 && recording ? "Camera stable" : "Hold steady"} />
           <QualityChip ok label="Frame quality" />
