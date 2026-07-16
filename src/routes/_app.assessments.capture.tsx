@@ -91,32 +91,68 @@ function CapturePage() {
           } catch { /* ignore */ }
         }, 300);
 
-        // Load on-device person detection (COCO-SSD via TensorFlow.js)
-        const [tf, cocoSsd] = await Promise.all([
+        // Load on-device body segmentation (BodyPix via TensorFlow.js)
+        const [tf, bodyPix] = await Promise.all([
           import("@tensorflow/tfjs"),
-          import("@tensorflow-models/coco-ssd"),
+          import("@tensorflow-models/body-pix"),
         ]);
         await tf.ready();
         if (cancelled) return;
-        model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
+        model = await bodyPix.load({ architecture: "MobileNetV1", outputStride: 16, multiplier: 0.5, quantBytes: 2 });
         if (cancelled) return;
 
         detectTimer = setInterval(async () => {
           const v = videoRef.current;
           if (!v || v.readyState < 2 || !model) return;
           try {
-            const preds = await model.detect(v, 5);
-            const people = preds.filter((p) => p.class === "person" && p.score >= 0.6);
-            const best = people.sort((a, b) => b.score - a.score)[0];
-            if (best) {
-              const [x, y, w, h] = best.bbox;
-              bboxRef.current = { x, y, w, h, score: best.score };
+            const seg = await model.segmentPerson(v, {
+              internalResolution: "medium",
+              segmentationThreshold: 0.7,
+              maxDetections: 1,
+            });
+            const { data, width, height } = seg;
+            // Compute bbox + count from mask
+            let minX = width, minY = height, maxX = 0, maxY = 0, count = 0;
+            for (let y = 0; y < height; y++) {
+              for (let x = 0; x < width; x++) {
+                if (data[y * width + x]) {
+                  count++;
+                  if (x < minX) minX = x;
+                  if (y < minY) minY = y;
+                  if (x > maxX) maxX = x;
+                  if (y > maxY) maxY = y;
+                }
+              }
+            }
+            const found = count > width * height * 0.02;
+            if (found) {
+              // Edge mask: pixel is edge if fg and any 4-neighbor is bg
+              const edge = new Uint8Array(width * height);
+              for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                  const i = y * width + x;
+                  if (!data[i]) continue;
+                  if (!data[i - 1] || !data[i + 1] || !data[i - width] || !data[i + width]) edge[i] = 1;
+                }
+              }
+              // Map bbox from mask coords to video coords
+              const sx = v.videoWidth / width;
+              const sy = v.videoHeight / height;
+              bboxRef.current = {
+                x: minX * sx,
+                y: minY * sy,
+                w: (maxX - minX) * sx,
+                h: (maxY - minY) * sy,
+                score: Math.min(1, count / (width * height * 0.25)),
+              };
+              maskRef.current = { data: data as Uint8Array, width, height, edge };
             } else {
               bboxRef.current = null;
+              maskRef.current = null;
             }
-            if (!cancelled) setPersonDetected(!!best);
+            if (!cancelled) setPersonDetected(found);
           } catch { /* ignore per-frame errors */ }
-        }, 350);
+        }, 250);
 
         // rAF draw loop: animated tracking outline
         let raf = 0;
