@@ -35,7 +35,7 @@ function CapturePage() {
     let cancelled = false;
     let detectTimer: ReturnType<typeof setInterval> | null = null;
     let qualityTimer: ReturnType<typeof setInterval> | null = null;
-    let model: import("@tensorflow-models/coco-ssd").ObjectDetection | null = null;
+    let model: import("@tensorflow-models/body-pix").BodyPix | null = null;
 
     async function initCam() {
       try {
