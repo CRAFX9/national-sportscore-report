@@ -256,6 +256,7 @@ function CapturePage() {
       <TopBar title={labelForType(current)} back />
       <div className="relative -mt-4 h-[calc(100vh-9rem)] w-full overflow-hidden bg-black">
         <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover opacity-90" />
+        <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
 
         {/* Skeleton / overlay guides */}
         <div className="pointer-events-none absolute inset-0">
