@@ -26,6 +26,9 @@ function CapturePage() {
   const [frameOk, setFrameOk] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const bboxRef = useRef<{ x: number; y: number; w: number; h: number; score: number } | null>(null);
+  const smoothRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
