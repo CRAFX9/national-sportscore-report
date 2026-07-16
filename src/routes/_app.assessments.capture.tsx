@@ -29,12 +29,13 @@ function CapturePage() {
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const bboxRef = useRef<{ x: number; y: number; w: number; h: number; score: number } | null>(null);
   const smoothRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const maskRef = useRef<{ data: Uint8Array; width: number; height: number; edge: Uint8Array } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     let detectTimer: ReturnType<typeof setInterval> | null = null;
     let qualityTimer: ReturnType<typeof setInterval> | null = null;
-    let model: import("@tensorflow-models/coco-ssd").ObjectDetection | null = null;
+    let model: import("@tensorflow-models/body-pix").BodyPix | null = null;
 
     async function initCam() {
       try {
@@ -90,35 +91,74 @@ function CapturePage() {
           } catch { /* ignore */ }
         }, 300);
 
-        // Load on-device person detection (COCO-SSD via TensorFlow.js)
-        const [tf, cocoSsd] = await Promise.all([
+        // Load on-device body segmentation (BodyPix via TensorFlow.js)
+        const [tf, bodyPix] = await Promise.all([
           import("@tensorflow/tfjs"),
-          import("@tensorflow-models/coco-ssd"),
+          import("@tensorflow-models/body-pix"),
         ]);
         await tf.ready();
         if (cancelled) return;
-        model = await cocoSsd.load({ base: "lite_mobilenet_v2" });
+        model = await bodyPix.load({ architecture: "MobileNetV1", outputStride: 16, multiplier: 0.5, quantBytes: 2 });
         if (cancelled) return;
 
         detectTimer = setInterval(async () => {
           const v = videoRef.current;
           if (!v || v.readyState < 2 || !model) return;
           try {
-            const preds = await model.detect(v, 5);
-            const people = preds.filter((p) => p.class === "person" && p.score >= 0.6);
-            const best = people.sort((a, b) => b.score - a.score)[0];
-            if (best) {
-              const [x, y, w, h] = best.bbox;
-              bboxRef.current = { x, y, w, h, score: best.score };
+            const seg = await model.segmentPerson(v, {
+              internalResolution: "medium",
+              segmentationThreshold: 0.7,
+              maxDetections: 1,
+            });
+            const { data, width, height } = seg;
+            // Compute bbox + count from mask
+            let minX = width, minY = height, maxX = 0, maxY = 0, count = 0;
+            for (let y = 0; y < height; y++) {
+              for (let x = 0; x < width; x++) {
+                if (data[y * width + x]) {
+                  count++;
+                  if (x < minX) minX = x;
+                  if (y < minY) minY = y;
+                  if (x > maxX) maxX = x;
+                  if (y > maxY) maxY = y;
+                }
+              }
+            }
+            const found = count > width * height * 0.02;
+            if (found) {
+              // Edge mask: pixel is edge if fg and any 4-neighbor is bg
+              const edge = new Uint8Array(width * height);
+              for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                  const i = y * width + x;
+                  if (!data[i]) continue;
+                  if (!data[i - 1] || !data[i + 1] || !data[i - width] || !data[i + width]) edge[i] = 1;
+                }
+              }
+              // Map bbox from mask coords to video coords
+              const sx = v.videoWidth / width;
+              const sy = v.videoHeight / height;
+              bboxRef.current = {
+                x: minX * sx,
+                y: minY * sy,
+                w: (maxX - minX) * sx,
+                h: (maxY - minY) * sy,
+                score: Math.min(1, count / (width * height * 0.25)),
+              };
+              maskRef.current = { data: data as Uint8Array, width, height, edge };
             } else {
               bboxRef.current = null;
+              maskRef.current = null;
             }
-            if (!cancelled) setPersonDetected(!!best);
+            if (!cancelled) setPersonDetected(found);
           } catch { /* ignore per-frame errors */ }
-        }, 350);
+        }, 250);
 
-        // rAF draw loop: animated tracking outline
+        // rAF draw loop: body-shaped tracking outline
         let raf = 0;
+        // Offscreen canvases for the mask fill and edge outline
+        const fillCanvas = document.createElement("canvas");
+        const edgeCanvas = document.createElement("canvas");
         const draw = () => {
           const v = videoRef.current;
           const c = overlayRef.current;
@@ -130,42 +170,72 @@ function CapturePage() {
             if (dctx) {
               dctx.clearRect(0, 0, cw, ch);
               const box = bboxRef.current;
-              if (box) {
-                // Map video coords -> displayed canvas coords (object-cover)
+              const mask = maskRef.current;
+              if (box && mask) {
+                // object-cover mapping video -> canvas
                 const vw = v.videoWidth, vh = v.videoHeight;
                 const scale = Math.max(cw / vw, ch / vh);
                 const dw = vw * scale, dh = vh * scale;
                 const offX = (cw - dw) / 2, offY = (ch - dh) / 2;
+
+                const t = performance.now() / 1000;
+                const pulse = 0.55 + 0.45 * Math.sin(t * 3.5);
+
+                // Build fill imagedata (green tint over person)
+                const { data: md, width: mw, height: mh, edge } = mask;
+                if (fillCanvas.width !== mw) { fillCanvas.width = mw; edgeCanvas.width = mw; }
+                if (fillCanvas.height !== mh) { fillCanvas.height = mh; edgeCanvas.height = mh; }
+                const fctx = fillCanvas.getContext("2d");
+                const ectx = edgeCanvas.getContext("2d");
+                if (fctx && ectx) {
+                  const fill = fctx.createImageData(mw, mh);
+                  const edgeImg = ectx.createImageData(mw, mh);
+                  for (let i = 0; i < md.length; i++) {
+                    if (md[i]) {
+                      const p = i * 4;
+                      fill.data[p] = 52; fill.data[p + 1] = 211; fill.data[p + 2] = 153; fill.data[p + 3] = 55;
+                    }
+                    if (edge[i]) {
+                      const p = i * 4;
+                      edgeImg.data[p] = 52; edgeImg.data[p + 1] = 211; edgeImg.data[p + 2] = 153; edgeImg.data[p + 3] = 255;
+                    }
+                  }
+                  fctx.putImageData(fill, 0, 0);
+                  ectx.putImageData(edgeImg, 0, 0);
+
+                  // Draw silhouette fill
+                  dctx.imageSmoothingEnabled = true;
+                  dctx.globalAlpha = 0.65 * pulse;
+                  dctx.drawImage(fillCanvas, offX, offY, dw, dh);
+
+                  // Draw glow outline (blurred)
+                  dctx.globalAlpha = 0.9;
+                  dctx.filter = "blur(4px)";
+                  dctx.drawImage(edgeCanvas, offX, offY, dw, dh);
+                  dctx.filter = "none";
+
+                  // Crisp outline
+                  dctx.globalAlpha = 1;
+                  dctx.drawImage(edgeCanvas, offX, offY, dw, dh);
+                  dctx.globalAlpha = 1;
+                }
+
+                // Derived bbox in canvas coords
                 const tx = box.x * scale + offX;
                 const ty = box.y * scale + offY;
                 const tw = box.w * scale;
                 const th = box.h * scale;
-
-                // Smooth (exponential)
                 const s = smoothRef.current;
                 const next = s
                   ? { x: s.x + (tx - s.x) * 0.35, y: s.y + (ty - s.y) * 0.35, w: s.w + (tw - s.w) * 0.35, h: s.h + (th - s.h) * 0.35 }
                   : { x: tx, y: ty, w: tw, h: th };
                 smoothRef.current = next;
-
                 const { x, y, w, h } = next;
-                const t = performance.now() / 1000;
-                const pulse = 0.6 + 0.4 * Math.sin(t * 4);
 
-                // Outer glow rectangle
-                dctx.strokeStyle = `rgba(52, 211, 153, ${0.35 * pulse})`;
-                dctx.lineWidth = 6;
-                dctx.strokeRect(x, y, w, h);
-
-                // Main outline
-                dctx.strokeStyle = "rgba(52, 211, 153, 0.95)";
-                dctx.lineWidth = 2;
-                dctx.strokeRect(x, y, w, h);
-
-                // Corner brackets
+                // Corner brackets around bbox
                 const cl = Math.min(24, Math.min(w, h) * 0.2);
                 dctx.strokeStyle = "#34d399";
-                dctx.lineWidth = 4;
+                dctx.lineWidth = 3;
                 dctx.lineCap = "round";
                 const corners: Array<[number, number, number, number, number, number]> = [
                   [x, y + cl, x, y, x + cl, y],
@@ -178,15 +248,6 @@ function CapturePage() {
                   dctx.moveTo(x1, y1); dctx.lineTo(x2, y2); dctx.lineTo(x3, y3);
                   dctx.stroke();
                 }
-
-                // Scanning line
-                const scanY = y + ((t * 120) % h);
-                const grad = dctx.createLinearGradient(x, scanY - 20, x, scanY + 20);
-                grad.addColorStop(0, "rgba(52,211,153,0)");
-                grad.addColorStop(0.5, "rgba(52,211,153,0.7)");
-                grad.addColorStop(1, "rgba(52,211,153,0)");
-                dctx.fillStyle = grad;
-                dctx.fillRect(x, scanY - 20, w, 40);
 
                 // Label
                 const label = `PERSON  ${(box.score * 100).toFixed(0)}%`;
