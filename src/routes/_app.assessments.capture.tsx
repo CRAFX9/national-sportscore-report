@@ -29,6 +29,7 @@ function CapturePage() {
   const overlayRef = useRef<HTMLCanvasElement>(null);
   const bboxRef = useRef<{ x: number; y: number; w: number; h: number; score: number } | null>(null);
   const smoothRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const maskRef = useRef<{ data: Uint8Array; width: number; height: number; edge: Uint8Array } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
