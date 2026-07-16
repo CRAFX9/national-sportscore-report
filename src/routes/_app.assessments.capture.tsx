@@ -26,6 +26,9 @@ function CapturePage() {
   const [frameOk, setFrameOk] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const bboxRef = useRef<{ x: number; y: number; w: number; h: number; score: number } | null>(null);
+  const smoothRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,19 +105,120 @@ function CapturePage() {
           if (!v || v.readyState < 2 || !model) return;
           try {
             const preds = await model.detect(v, 5);
-            const found = preds.some((p) => p.class === "person" && p.score >= 0.6);
-            if (!cancelled) setPersonDetected(found);
+            const people = preds.filter((p) => p.class === "person" && p.score >= 0.6);
+            const best = people.sort((a, b) => b.score - a.score)[0];
+            if (best) {
+              const [x, y, w, h] = best.bbox;
+              bboxRef.current = { x, y, w, h, score: best.score };
+            } else {
+              bboxRef.current = null;
+            }
+            if (!cancelled) setPersonDetected(!!best);
           } catch { /* ignore per-frame errors */ }
-        }, 600);
+        }, 350);
+
+        // rAF draw loop: animated tracking outline
+        let raf = 0;
+        const draw = () => {
+          const v = videoRef.current;
+          const c = overlayRef.current;
+          if (v && c && v.videoWidth) {
+            const cw = c.clientWidth, ch = c.clientHeight;
+            if (c.width !== cw) c.width = cw;
+            if (c.height !== ch) c.height = ch;
+            const dctx = c.getContext("2d");
+            if (dctx) {
+              dctx.clearRect(0, 0, cw, ch);
+              const box = bboxRef.current;
+              if (box) {
+                // Map video coords -> displayed canvas coords (object-cover)
+                const vw = v.videoWidth, vh = v.videoHeight;
+                const scale = Math.max(cw / vw, ch / vh);
+                const dw = vw * scale, dh = vh * scale;
+                const offX = (cw - dw) / 2, offY = (ch - dh) / 2;
+                const tx = box.x * scale + offX;
+                const ty = box.y * scale + offY;
+                const tw = box.w * scale;
+                const th = box.h * scale;
+
+                // Smooth (exponential)
+                const s = smoothRef.current;
+                const next = s
+                  ? { x: s.x + (tx - s.x) * 0.35, y: s.y + (ty - s.y) * 0.35, w: s.w + (tw - s.w) * 0.35, h: s.h + (th - s.h) * 0.35 }
+                  : { x: tx, y: ty, w: tw, h: th };
+                smoothRef.current = next;
+
+                const { x, y, w, h } = next;
+                const t = performance.now() / 1000;
+                const pulse = 0.6 + 0.4 * Math.sin(t * 4);
+
+                // Outer glow rectangle
+                dctx.strokeStyle = `rgba(52, 211, 153, ${0.35 * pulse})`;
+                dctx.lineWidth = 6;
+                dctx.strokeRect(x, y, w, h);
+
+                // Main outline
+                dctx.strokeStyle = "rgba(52, 211, 153, 0.95)";
+                dctx.lineWidth = 2;
+                dctx.strokeRect(x, y, w, h);
+
+                // Corner brackets
+                const cl = Math.min(24, Math.min(w, h) * 0.2);
+                dctx.strokeStyle = "#34d399";
+                dctx.lineWidth = 4;
+                dctx.lineCap = "round";
+                const corners: Array<[number, number, number, number, number, number]> = [
+                  [x, y + cl, x, y, x + cl, y],
+                  [x + w - cl, y, x + w, y, x + w, y + cl],
+                  [x, y + h - cl, x, y + h, x + cl, y + h],
+                  [x + w - cl, y + h, x + w, y + h, x + w, y + h - cl],
+                ];
+                for (const [x1, y1, x2, y2, x3, y3] of corners) {
+                  dctx.beginPath();
+                  dctx.moveTo(x1, y1); dctx.lineTo(x2, y2); dctx.lineTo(x3, y3);
+                  dctx.stroke();
+                }
+
+                // Scanning line
+                const scanY = y + ((t * 120) % h);
+                const grad = dctx.createLinearGradient(x, scanY - 20, x, scanY + 20);
+                grad.addColorStop(0, "rgba(52,211,153,0)");
+                grad.addColorStop(0.5, "rgba(52,211,153,0.7)");
+                grad.addColorStop(1, "rgba(52,211,153,0)");
+                dctx.fillStyle = grad;
+                dctx.fillRect(x, scanY - 20, w, 40);
+
+                // Label
+                const label = `PERSON  ${(box.score * 100).toFixed(0)}%`;
+                dctx.font = "600 11px ui-sans-serif, system-ui";
+                const tm = dctx.measureText(label);
+                const padX = 8, padY = 4;
+                const labelW = tm.width + padX * 2, labelH = 20;
+                const lx = x, ly = Math.max(0, y - labelH - 4);
+                dctx.fillStyle = "rgba(16, 185, 129, 0.95)";
+                dctx.fillRect(lx, ly, labelW, labelH);
+                dctx.fillStyle = "#0b1220";
+                dctx.fillText(label, lx + padX, ly + labelH - padY - 2);
+              } else {
+                smoothRef.current = null;
+              }
+            }
+          }
+          raf = requestAnimationFrame(draw);
+        };
+        raf = requestAnimationFrame(draw);
+        rafRef = raf;
       } catch {
         /* camera not available */
       }
     }
+    let rafRef = 0;
     initCam();
     return () => {
       cancelled = true;
       if (detectTimer) clearInterval(detectTimer);
       if (qualityTimer) clearInterval(qualityTimer);
+      if (rafRef) cancelAnimationFrame(rafRef);
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
@@ -152,6 +256,7 @@ function CapturePage() {
       <TopBar title={labelForType(current)} back />
       <div className="relative -mt-4 h-[calc(100vh-9rem)] w-full overflow-hidden bg-black">
         <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover opacity-90" />
+        <canvas ref={overlayRef} className="pointer-events-none absolute inset-0 h-full w-full" />
 
         {/* Skeleton / overlay guides */}
         <div className="pointer-events-none absolute inset-0">
