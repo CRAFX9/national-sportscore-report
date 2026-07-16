@@ -102,6 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: "https://cdn.vectorstock.com/i/500p/42/51/new-simple-physical-training-logo-healthy-people-vector-28434251.avif" },
     ],
   }),
   shellComponent: RootShell,
