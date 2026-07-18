@@ -12,7 +12,7 @@ function ageGroup(age: number): AgeGroup {
 }
 
 function lookup(kind: AssessmentKind, age: number, gender: "male" | "female"): Band | null {
-  const table = (benchmarks as Record<string, Record<string, Record<string, Band>>>)[kind];
+  const table = (benchmarks as unknown as Record<string, Record<string, Record<string, Band>>>)[kind];
   if (!table) return null;
   return table[ageGroup(age)]?.[gender] ?? null;
 }
