@@ -39,8 +39,8 @@ function ProcessingPage() {
     }
     let cancelled = false;
     (async () => {
-      const student = await studentsRepo.get(draft.studentId!);
-      const assessment = await assessmentsRepo.get(draft.lastAssessmentId!);
+      const student = await studentsRepo.find(draft.studentId!);
+      const assessment = (await assessmentsRepo.all()).find((a) => a.id === draft.lastAssessmentId);
       if (!student || !assessment) return;
       const report = await runPipeline({
         kind: assessment.type,
