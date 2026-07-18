@@ -1,0 +1,33 @@
+{
+  "version": "2026.1",
+  "source": "NSRC national benchmark table (placeholder — replace with SAI-published values).",
+  "sprint_30m": {
+    "5-8":   { "male": { "elite": 5.4, "good": 6.2, "avg": 7.0 }, "female": { "elite": 5.6, "good": 6.4, "avg": 7.2 } },
+    "9-12":  { "male": { "elite": 4.8, "good": 5.4, "avg": 6.0 }, "female": { "elite": 5.0, "good": 5.6, "avg": 6.2 } },
+    "13-15": { "male": { "elite": 4.3, "good": 4.8, "avg": 5.4 }, "female": { "elite": 4.6, "good": 5.1, "avg": 5.7 } },
+    "16-18": { "male": { "elite": 3.9, "good": 4.4, "avg": 5.0 }, "female": { "elite": 4.3, "good": 4.8, "avg": 5.4 } }
+  },
+  "broad_jump": {
+    "5-8":   { "male": { "elite": 1.5, "good": 1.2, "avg": 0.9 }, "female": { "elite": 1.4, "good": 1.1, "avg": 0.85 } },
+    "9-12":  { "male": { "elite": 1.9, "good": 1.6, "avg": 1.3 }, "female": { "elite": 1.8, "good": 1.5, "avg": 1.2 } },
+    "13-15": { "male": { "elite": 2.3, "good": 2.0, "avg": 1.7 }, "female": { "elite": 2.1, "good": 1.8, "avg": 1.5 } },
+    "16-18": { "male": { "elite": 2.6, "good": 2.3, "avg": 2.0 }, "female": { "elite": 2.3, "good": 2.0, "avg": 1.7 } }
+  },
+  "vertical_jump": {
+    "5-8":   { "male": { "elite": 25, "good": 20, "avg": 15 }, "female": { "elite": 23, "good": 18, "avg": 13 } },
+    "9-12":  { "male": { "elite": 35, "good": 28, "avg": 22 }, "female": { "elite": 32, "good": 25, "avg": 20 } },
+    "13-15": { "male": { "elite": 48, "good": 40, "avg": 32 }, "female": { "elite": 42, "good": 34, "avg": 28 } },
+    "16-18": { "male": { "elite": 60, "good": 50, "avg": 40 }, "female": { "elite": 50, "good": 42, "avg": 34 } }
+  },
+  "shuttle_run": {
+    "9-12":  { "male": { "elite": 10.0, "good": 11.0, "avg": 12.0 }, "female": { "elite": 10.5, "good": 11.5, "avg": 12.5 } },
+    "13-15": { "male": { "elite": 9.0,  "good": 10.0, "avg": 11.0 }, "female": { "elite": 9.5,  "good": 10.5, "avg": 11.5 } },
+    "16-18": { "male": { "elite": 8.5,  "good": 9.5,  "avg": 10.5 }, "female": { "elite": 9.0,  "good": 10.0, "avg": 11.0 } }
+  },
+  "balance_test": {
+    "5-8":   { "male": { "elite": 90, "good": 75, "avg": 60 }, "female": { "elite": 92, "good": 78, "avg": 62 } },
+    "9-12":  { "male": { "elite": 92, "good": 80, "avg": 65 }, "female": { "elite": 94, "good": 82, "avg": 68 } },
+    "13-15": { "male": { "elite": 94, "good": 82, "avg": 70 }, "female": { "elite": 95, "good": 84, "avg": 72 } },
+    "16-18": { "male": { "elite": 95, "good": 85, "avg": 72 }, "female": { "elite": 96, "good": 86, "avg": 74 } }
+  }
+}

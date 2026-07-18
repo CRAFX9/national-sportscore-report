@@ -5,9 +5,10 @@ import { TopBar } from "@/components/nsrc/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useAssessmentDraft } from "@/stores/assessment-draft";
-import { resultsRepo, reportsRepo } from "@/lib/repositories";
+import { resultsRepo, reportsRepo, studentsRepo, assessmentsRepo } from "@/lib/repositories";
 import type { AssessmentResult, Report } from "@/lib/types";
 import { labelForType } from "@/lib/seed";
+import { runPipeline, type PipelineStage } from "@/ai";
 
 export const Route = createFileRoute("/_app/assessments/processing")({
   component: ProcessingPage,
@@ -20,6 +21,11 @@ const STAGES = [
   { label: "Generating report", Icon: FileCheck2 },
 ];
 
+const STAGE_MAP: Record<PipelineStage, number> = {
+  extracting_frames: 0, quality_check: 0, pose_detection: 0,
+  movement_analysis: 1, scoring: 2, anti_cheat: 2, recommendations: 3, report: 3,
+};
+
 function ProcessingPage() {
   const navigate = useNavigate();
   const draft = useAssessmentDraft();
@@ -31,49 +37,59 @@ function ProcessingPage() {
       navigate({ to: "/assessments/new" });
       return;
     }
-    const timers: number[] = [];
-    STAGES.forEach((_, i) => {
-      timers.push(window.setTimeout(() => setStage(i + 1), (i + 1) * 700));
-    });
-    const p = window.setInterval(() => {
-      setProgress((v) => (v >= 100 ? 100 : v + 4));
-    }, 120);
-
-    const done = window.setTimeout(async () => {
-      const base = 55 + Math.floor(Math.random() * 40);
-      const jitter = () => Math.max(30, Math.min(99, base + Math.floor(Math.random() * 24 - 12)));
+    let cancelled = false;
+    (async () => {
+      const student = await studentsRepo.find(draft.studentId!);
+      const assessment = (await assessmentsRepo.all()).find((a) => a.id === draft.lastAssessmentId);
+      if (!student || !assessment) return;
+      const report = await runPipeline({
+        kind: assessment.type,
+        video: { uri: assessment.videoRef ?? `local://${assessment.id}`, fps: 30, height: 720, recordedAt: assessment.createdAt, deviceClockAt: Date.now() },
+        athlete: {
+          athleteId: student.athleteId, age: student.age,
+          gender: student.gender === "female" ? "female" : student.gender === "male" ? "male" : "other",
+          heightCm: student.heightCm, weightKg: student.weightKg,
+          district: student.district, state: student.state,
+        },
+        onProgress: (s, pct) => {
+          if (cancelled) return;
+          setStage(STAGE_MAP[s]);
+          setProgress(pct);
+        },
+      });
+      if (cancelled) return;
       const r: AssessmentResult = {
         id: crypto.randomUUID(),
         assessmentId: draft.lastAssessmentId!,
         studentId: draft.studentId!,
-        overall: base,
+        overall: report.scores.overall,
         metrics: {
-          speed: jitter(), strength: jitter(), agility: jitter(),
-          power: jitter(), endurance: jitter(), coordination: jitter(),
+          speed: report.scores.speed, strength: report.scores.strength,
+          agility: report.scores.agility, power: report.scores.power,
+          endurance: report.scores.endurance, coordination: report.scores.coordination,
         },
-        nationalPercentile: 60 + Math.floor(Math.random() * 40),
-        districtRank: 1 + Math.floor(Math.random() * 200),
-        recommendedSports: ["Athletics — Sprint", "Long Jump", "Football"],
-        strengths: ["Explosive power", "Reaction time"],
-        improvements: ["Cardiovascular endurance"],
+        nationalPercentile: report.scores.nationalPercentile,
+        districtRank: report.scores.districtRank ?? 0,
+        recommendedSports: report.recommendations.map((x) => x.sport),
+        strengths: report.strengths,
+        improvements: report.improvements,
         createdAt: Date.now(),
       };
       await resultsRepo.create(r);
-      const type = draft.selected[draft.currentIndex];
-      const report: Report = {
+      const rep: Report = {
         id: crypto.randomUUID(),
         studentId: draft.studentId!,
         resultId: r.id,
-        title: `${labelForType(type)} — Report`,
+        title: `${labelForType(assessment.type)} — Report`,
         createdAt: Date.now(),
       };
-      await reportsRepo.create(report);
+      await reportsRepo.create(rep);
       navigate({ to: "/assessments/results/$id", params: { id: r.id } });
-    }, 3200);
-
-    return () => { timers.forEach(clearTimeout); clearInterval(p); clearTimeout(done); };
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   return (
     <>
