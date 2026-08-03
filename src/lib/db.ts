@@ -4,6 +4,7 @@ import Dexie, { type Table } from "dexie";
 import type {
   Assessment,
   AssessmentResult,
+  Coach,
   NotificationItem,
   Report,
   Student,
@@ -14,6 +15,7 @@ import type {
 class NSRCDatabase extends Dexie {
   users!: Table<User, string>;
   students!: Table<Student, string>;
+  coaches!: Table<Coach, string>;
   assessments!: Table<Assessment, string>;
   assessment_results!: Table<AssessmentResult, string>;
   reports!: Table<Report, string>;
@@ -30,6 +32,9 @@ class NSRCDatabase extends Dexie {
       reports: "id, studentId, createdAt",
       sync_queue: "id, kind, status, createdAt",
       notifications: "id, read, createdAt",
+    });
+    this.version(2).stores({
+      coaches: "id, name, district, active, createdAt",
     });
   }
 }

@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/nsrc/states";
 import { studentsRepo } from "@/lib/repositories";
 import { toast } from "sonner";
+import { useAuth } from "@/stores/auth";
+import { can } from "@/lib/permissions";
 
 export const Route = createFileRoute("/_app/students/")({
   component: StudentsPage,
@@ -20,6 +22,8 @@ type Filter = "all" | "recent" | "pending";
 function StudentsPage() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const role = useAuth((s) => s.user?.role);
+  const canManage = can(role, "manageStudents");
 
   const { data: students = [], refetch } = useQuery({
     queryKey: ["students"],
@@ -46,9 +50,11 @@ function StudentsPage() {
         title="Students"
         subtitle={`${students.length} registered`}
         action={
-          <Button asChild size="sm" className="gap-1">
-            <Link to="/students/new"><Plus className="h-4 w-4" />Add</Link>
-          </Button>
+          canManage ? (
+            <Button asChild size="sm" className="gap-1">
+              <Link to="/students/new"><Plus className="h-4 w-4" />Add</Link>
+            </Button>
+          ) : undefined
         }
       />
 
@@ -80,7 +86,7 @@ function StudentsPage() {
             icon={<Filter className="h-8 w-8" />}
             title="No students match your filters"
             description="Try clearing the search or adding a new student."
-            action={<Button asChild><Link to="/students/new">Register student</Link></Button>}
+            action={canManage ? <Button asChild><Link to="/students/new">Register student</Link></Button> : undefined}
           />
         ) : (
           <div className="space-y-2">
@@ -107,12 +113,16 @@ function StudentsPage() {
                     <Button asChild size="icon" variant="ghost">
                       <Link to="/profile/$id" params={{ id: s.id }} aria-label="View"><Eye className="h-4 w-4" /></Link>
                     </Button>
-                    <Button asChild size="icon" variant="ghost">
-                      <Link to="/students/$id/edit" params={{ id: s.id }} aria-label="Edit"><Pencil className="h-4 w-4" /></Link>
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => remove(s.id, s.name)} aria-label="Delete">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    {canManage && (
+                      <>
+                        <Button asChild size="icon" variant="ghost">
+                          <Link to="/students/$id/edit" params={{ id: s.id }} aria-label="Edit"><Pencil className="h-4 w-4" /></Link>
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => remove(s.id, s.name)} aria-label="Delete">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
