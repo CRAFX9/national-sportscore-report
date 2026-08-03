@@ -3,9 +3,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Award, Building2, ShieldCheck, User, WifiOff } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Award, Building2, GraduationCap, ShieldCheck, User, WifiOff } from "lucide-react";
 import { useAuth } from "@/stores/auth";
 import type { UserRole } from "@/lib/types";
+import { studentsRepo } from "@/lib/repositories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,10 +19,11 @@ export const Route = createFileRoute("/login")({
 });
 
 const roles: { id: UserRole; label: string; desc: string; Icon: typeof User }[] = [
-  { id: "coach", label: "Coach", desc: "Run assessments and manage athletes", Icon: Award },
-  { id: "district_officer", label: "District Officer", desc: "Oversee district-wide performance", Icon: Building2 },
-  { id: "sai_official", label: "SAI Official", desc: "National oversight & standards", Icon: ShieldCheck },
-  { id: "parent", label: "Parent", desc: "View your child's scout profile", Icon: User },
+  { id: "student", label: "Student", desc: "See your own report card", Icon: GraduationCap },
+  { id: "coach", label: "Coach", desc: "Assess & manage athletes", Icon: Award },
+  { id: "district_officer", label: "District Officer", desc: "Manage athletes & coaches", Icon: Building2 },
+  { id: "sai_official", label: "SAI Official", desc: "National oversight", Icon: ShieldCheck },
+  { id: "parent", label: "Parent", desc: "Monitor your child only", Icon: User },
 ];
 
 const schema = z.object({
@@ -33,7 +36,11 @@ function LoginPage() {
   const navigate = useNavigate();
   const loginAs = useAuth((s) => s.loginAs);
   const [role, setRole] = useState<UserRole>("coach");
+  const [studentId, setStudentId] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+
+  const needsAthlete = role === "student" || role === "parent";
+  const { data: students = [] } = useQuery({ queryKey: ["students"], queryFn: () => studentsRepo.all() });
 
   const form = useForm<FormV>({
     resolver: zodResolver(schema),
@@ -49,7 +56,13 @@ function LoginPage() {
   };
 
   const onSubmit = (v: FormV) => {
-    loginAs(role, v.phone);
+    if (needsAthlete && !studentId) {
+      toast.error(role === "parent" ? "Select your child's profile" : "Select your athlete profile");
+      return;
+    }
+    const linked = needsAthlete ? students.find((s) => s.id === studentId) : undefined;
+    const name = role === "student" ? linked?.name : role === "parent" ? linked?.parentName : undefined;
+    loginAs(role, v.phone, needsAthlete ? studentId : null, name);
     toast.success("Signed in");
     navigate({ to: "/dashboard" });
   };
@@ -66,7 +79,7 @@ function LoginPage() {
 
       <h2 className="text-2xl font-semibold tracking-tight">Sign in</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Choose your role and continue with OTP. Works offline after first login.
+        Choose your role and continue with OTP. You'll only see the options your role allows.
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
@@ -76,7 +89,7 @@ function LoginPage() {
             <button
               key={id}
               type="button"
-              onClick={() => setRole(id)}
+              onClick={() => { setRole(id); setStudentId(""); }}
               className={cn(
                 "flex flex-col items-start gap-2 rounded-2xl border p-3 text-left transition-all",
                 active
@@ -102,6 +115,23 @@ function LoginPage() {
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-5 elevation-1">
+        {needsAthlete && (
+          <div>
+            <Label htmlFor="athlete">{role === "parent" ? "Your child" : "Your athlete profile"}</Label>
+            <select
+              id="athlete"
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              className="mt-1 h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+            >
+              <option value="">Select…</option>
+              {students.map((s) => (
+                <option key={s.id} value={s.id}>{s.name} — {s.athleteId}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div>
           <Label htmlFor="phone">Mobile number</Label>
           <Input id="phone" placeholder="+91 98765 43210" inputMode="tel" {...form.register("phone")} />

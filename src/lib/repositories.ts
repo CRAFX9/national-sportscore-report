@@ -1,8 +1,29 @@
 // Repository pattern over Dexie tables.
 import { db } from "./db";
 import type {
-  Assessment, AssessmentResult, Report, Student, SyncItem,
+  Assessment, AssessmentResult, Coach, Report, Student, SyncItem,
 } from "./types";
+
+const DEMO_COACHES: Omit<Coach, "id" | "createdAt">[] = [
+  { name: "Ramesh Deshmukh", phone: "+91 9822011223", school: "SAI Sports Academy", district: "Pune", state: "Maharashtra", specialization: "Athletics — Sprints", active: true },
+  { name: "Sunita Bhosale", phone: "+91 9822044556", school: "Kendriya Vidyalaya No. 1", district: "Pune", state: "Maharashtra", specialization: "Kabaddi", active: true },
+  { name: "Anil Kulkarni", phone: "+91 9822077889", school: "DAV Public School", district: "Pune", state: "Maharashtra", specialization: "Football", active: false },
+];
+
+export const coachesRepo = {
+  all: () => db.coaches.orderBy("createdAt").reverse().toArray(),
+  find: (id: string) => db.coaches.get(id),
+  create: (c: Coach) => db.coaches.add(c),
+  update: (id: string, patch: Partial<Coach>) => db.coaches.update(id, patch),
+  remove: (id: string) => db.coaches.delete(id),
+  ensureSeed: async () => {
+    if ((await db.coaches.count()) > 0) return;
+    await db.coaches.bulkAdd(
+      DEMO_COACHES.map((c, i) => ({ ...c, id: crypto.randomUUID(), createdAt: Date.now() - i * 86400000 })),
+    );
+  },
+};
+
 
 export const studentsRepo = {
   all: () => db.students.orderBy("createdAt").reverse().toArray(),

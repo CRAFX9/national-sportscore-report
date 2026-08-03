@@ -1,5 +1,6 @@
 // Realistic Indian dummy data for NSRC demo. Seeded once into IndexedDB.
 import { db, isBrowser } from "./db";
+import { labelForAssessment } from "./catalog";
 import type {
   Assessment,
   AssessmentResult,
@@ -150,12 +151,6 @@ export async function ensureSeed() {
 }
 
 export function labelForType(t: AssessmentType): string {
-  switch (t) {
-    case "sprint_30m": return "30m Sprint";
-    case "sprint_50m": return "50m Sprint";
-    case "broad_jump": return "Standing Broad Jump";
-    case "vertical_jump": return "Vertical Jump";
-    case "shuttle_run": return "4x10m Shuttle Run";
-    case "reaction_test": return "Reaction Test";
-  }
+  return labelForAssessment(t);
 }
+

@@ -1,12 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, ClipboardList, Plus, RefreshCw, Trophy, Users } from "lucide-react";
+import { Activity, ClipboardList, Plus, RefreshCw, Trophy, Users, Award, BarChart3 } from "lucide-react";
 import { TopBar } from "@/components/nsrc/top-bar";
 import { StatusChip } from "@/components/nsrc/status-chip";
+import { ScoreRing } from "@/components/nsrc/score-ring";
 import { Card, CardContent } from "@/components/ui/card";
-import { assessmentsRepo, reportsRepo, resultsRepo, studentsRepo, syncRepo } from "@/lib/repositories";
+import { Button } from "@/components/ui/button";
+import {
+  assessmentsRepo, coachesRepo, reportsRepo, resultsRepo, studentsRepo, syncRepo,
+} from "@/lib/repositories";
 import { useAuth } from "@/stores/auth";
-import { db } from "@/lib/db";
+import { can, ROLE_LABELS } from "@/lib/permissions";
 import { labelForType } from "@/lib/seed";
 import { formatDistanceToNow } from "date-fns";
 
@@ -16,20 +20,134 @@ export const Route = createFileRoute("/_app/dashboard")({
 
 function DashboardPage() {
   const user = useAuth((s) => s.user);
+  const linkedStudentId = useAuth((s) => s.linkedStudentId);
+  const role = user?.role;
+  const selfOnly = can(role, "selfOnly");
+
+  return (
+    <>
+      <TopBar
+        title={`Namaste, ${user?.name ?? "Guest"}`}
+        subtitle={`${role ? ROLE_LABELS[role] : "Dashboard"}${user?.district ? ` • ${user.district}` : ""}`}
+      />
+      {selfOnly ? (
+        <PersonalDashboard studentId={linkedStudentId} isParent={role === "parent"} />
+      ) : (
+        <StaffDashboard />
+      )}
+    </>
+  );
+}
+
+/* ------------------------------- Student / Parent ------------------------------- */
+
+function PersonalDashboard({ studentId, isParent }: { studentId: string | null; isParent: boolean }) {
+  const { data } = useQuery({
+    queryKey: ["personal-dashboard", studentId],
+    enabled: !!studentId,
+    queryFn: async () => {
+      const s = await studentsRepo.find(studentId!);
+      const [results, assessments] = await Promise.all([
+        resultsRepo.byStudent(studentId!),
+        assessmentsRepo.byStudent(studentId!),
+      ]);
+      return { s, results, assessments };
+    },
+  });
+
+  if (!studentId) {
+    return (
+      <div className="px-4 pt-6">
+        <Card><CardContent className="p-5 text-sm">
+          No athlete profile is linked to this account. Sign in again and select a profile.
+        </CardContent></Card>
+      </div>
+    );
+  }
+
+  const best = data?.results?.[0];
+
+  return (
+    <div className="space-y-5 px-4 pt-4">
+      <Card><CardContent className="flex items-center gap-4 p-5">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-container text-xl font-bold text-on-primary-container">
+          {(data?.s?.name ?? "?").slice(0, 1)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg font-bold">{data?.s?.name ?? "—"}</p>
+          <p className="text-xs text-muted-foreground">{data?.s?.athleteId} • {data?.s?.district}</p>
+        </div>
+        {best ? <ScoreRing score={best.overall} size={64} /> : null}
+      </CardContent></Card>
+
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard icon={<ClipboardList className="h-5 w-5" />} label="Assessments" value={data?.assessments.length ?? "—"} />
+        <StatCard icon={<Trophy className="h-5 w-5" />} label="National percentile" value={best ? `${best.nationalPercentile}%` : "—"} />
+      </div>
+
+      <section>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          {isParent ? "Your child's reports" : "My reports"}
+        </h2>
+        <div className="space-y-2">
+          {(data?.results ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">No results yet — your coach will run an assessment.</p>
+          ) : (
+            data?.results.map((r) => (
+              <Link key={r.id} to="/assessments/results/$id" params={{ id: r.id }}>
+                <Card className="hover:elevation-2 transition-shadow">
+                  <CardContent className="flex items-center gap-3 p-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tertiary-container text-on-tertiary-container">
+                      <Activity className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">Overall score {r.overall}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(r.createdAt, { addSuffix: true })}
+                      </p>
+                    </div>
+                    <StatusChip variant="info">Report</StatusChip>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))
+          )}
+        </div>
+      </section>
+
+      <Button asChild variant="outline" className="w-full">
+        <Link to="/profile/$id" params={{ id: studentId }}>
+          {isParent ? "View full scout profile" : "View my scout profile"}
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
+/* --------------------------- Coach / Officer / SAI --------------------------- */
+
+function StaffDashboard() {
+  const user = useAuth((s) => s.user);
+  const role = user?.role;
 
   const { data: stats } = useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", role],
     queryFn: async () => {
-      const [studentsCount, today, pending, top, recentReports] = await Promise.all([
-        studentsRepo.all().then((r) => r.length),
+      const [students, today, pending, top, recentReports] = await Promise.all([
+        studentsRepo.all(),
         assessmentsRepo.todayCount(),
         syncRepo.pendingCount(),
         resultsRepo.topAthletes(5),
         reportsRepo.recent(5),
       ]);
-      const studentMap = new Map((await studentsRepo.all()).map((s) => [s.id, s]));
+      let coaches = 0;
+      if (can(role, "manageCoaches")) {
+        await coachesRepo.ensureSeed();
+        coaches = (await coachesRepo.all()).length;
+      }
+      const studentMap = new Map(students.map((s) => [s.id, s]));
       return {
-        studentsCount, today, pending,
+        studentsCount: students.length, today, pending, coaches,
         top: top.map((r) => ({ ...r, student: studentMap.get(r.studentId) })),
         recentReports: recentReports.map((r) => ({ ...r, student: studentMap.get(r.studentId) })),
       };
@@ -38,23 +156,34 @@ function DashboardPage() {
 
   return (
     <>
-      <TopBar
-        title={`Namaste, ${user?.name ?? "Coach"}`}
-        subtitle={user?.district ? `${user.district}, ${user.state}` : "Dashboard"}
-      />
-
       <div className="space-y-5 px-4 pt-4">
         <div className="grid grid-cols-2 gap-3">
-          <StatCard icon={<ClipboardList className="h-5 w-5" />} label="Today's Assessments" value={stats?.today ?? "—"} />
+          {can(role, "assess") && (
+            <StatCard icon={<ClipboardList className="h-5 w-5" />} label="Today's Assessments" value={stats?.today ?? "—"} />
+          )}
           <StatCard icon={<Users className="h-5 w-5" />} label="Students" value={stats?.studentsCount ?? "—"} />
-          <StatCard
-            icon={<RefreshCw className="h-5 w-5" />}
-            label="Pending Sync"
-            value={stats?.pending ?? "—"}
-            highlight={(stats?.pending ?? 0) > 0}
-          />
+          {can(role, "manageCoaches") && (
+            <StatCard icon={<Award className="h-5 w-5" />} label="Coaches" value={stats?.coaches ?? "—"} />
+          )}
+          {can(role, "sync") && (
+            <StatCard
+              icon={<RefreshCw className="h-5 w-5" />}
+              label="Pending Sync"
+              value={stats?.pending ?? "—"}
+              highlight={(stats?.pending ?? 0) > 0}
+            />
+          )}
+          {can(role, "analytics") && (
+            <StatCard icon={<BarChart3 className="h-5 w-5" />} label="Reports" value={stats?.recentReports.length ?? "—"} />
+          )}
           <StatCard icon={<Trophy className="h-5 w-5" />} label="Top Athletes" value={stats?.top.length ?? "—"} />
         </div>
+
+        {can(role, "manageCoaches") && (
+          <Button asChild variant="outline" className="w-full gap-2">
+            <Link to="/coaches"><Award className="h-4 w-4" /> Manage coach profiles</Link>
+          </Button>
+        )}
 
         <section>
           <SectionHeader title="Top Athletes" to="/students" />
@@ -93,38 +222,36 @@ function DashboardPage() {
             {stats?.recentReports.length === 0 ? (
               <p className="text-sm text-muted-foreground">No reports yet.</p>
             ) : (
-              stats?.recentReports.map((r) => {
-                const assessmentType = (r.title.split(" — ")[0] ?? "Report").toLowerCase().replace(/ /g, "_");
-                return (
-                  <Card key={r.id}>
-                    <CardContent className="flex items-center gap-3 p-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tertiary-container text-on-tertiary-container">
-                        <Activity className="h-4.5 w-4.5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{r.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(r.createdAt, { addSuffix: true })}
-                        </p>
-                      </div>
-                      <StatusChip variant="info">Report</StatusChip>
-                      <span className="sr-only">{assessmentType}</span>
-                    </CardContent>
-                  </Card>
-                );
-              })
+              stats?.recentReports.map((r) => (
+                <Card key={r.id}>
+                  <CardContent className="flex items-center gap-3 p-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-tertiary-container text-on-tertiary-container">
+                      <Activity className="h-4.5 w-4.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{r.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(r.createdAt, { addSuffix: true })}
+                      </p>
+                    </div>
+                    <StatusChip variant="info">Report</StatusChip>
+                  </CardContent>
+                </Card>
+              ))
             )}
           </div>
         </section>
       </div>
 
-      <Link
-        to="/assessments/new"
-        className="fixed bottom-20 right-1/2 z-50 flex translate-x-[calc(50%+11rem)] items-center gap-2 rounded-2xl gov-gradient px-5 py-3 text-sm font-semibold text-primary-foreground elevation-3 hover:opacity-95 sm:right-4 sm:translate-x-0"
-      >
-        <Plus className="h-4 w-4" />
-        Start Assessment
-      </Link>
+      {can(role, "assess") && (
+        <Link
+          to="/assessments/new"
+          className="fixed bottom-20 right-1/2 z-50 flex translate-x-[calc(50%+11rem)] items-center gap-2 rounded-2xl gov-gradient px-5 py-3 text-sm font-semibold text-primary-foreground elevation-3 hover:opacity-95 sm:right-4 sm:translate-x-0"
+        >
+          <Plus className="h-4 w-4" />
+          Start Assessment
+        </Link>
+      )}
     </>
   );
 }
@@ -154,5 +281,4 @@ function SectionHeader({ title, to }: { title: string; to: string }) {
   );
 }
 
-// Ensure db import is retained (helps tree-shaker keep types)
-void db;
+void labelForType;

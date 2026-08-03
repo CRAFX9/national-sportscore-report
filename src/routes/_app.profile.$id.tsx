@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, Share2 } from "lucide-react";
+import { Activity, Download, Lock, Pencil, Share2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { TopBar } from "@/components/nsrc/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +12,8 @@ import { ScoreRing } from "@/components/nsrc/score-ring";
 import { LoadingState } from "@/components/nsrc/states";
 import { assessmentsRepo, resultsRepo, studentsRepo } from "@/lib/repositories";
 import { labelForType } from "@/lib/seed";
+import { useAuth } from "@/stores/auth";
+import { can } from "@/lib/permissions";
 import { formatDistanceToNow, format } from "date-fns";
 import { toast } from "sonner";
 
@@ -20,8 +23,27 @@ export const Route = createFileRoute("/_app/profile/$id")({
 
 function ProfilePage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const role = useAuth((s) => s.user?.role);
+  const linkedStudentId = useAuth((s) => s.linkedStudentId);
+
+  const isOwn = linkedStudentId === id;
+  const selfOnly = can(role, "selfOnly");
+  const blocked = selfOnly && !isOwn && !can(role, "viewOtherProfiles");
+  const canEdit = can(role, "manageStudents");
+  const canAssess = can(role, "assess");
+  const readOnlyOther = selfOnly && !isOwn;
+
+  useEffect(() => {
+    if (role && blocked) {
+      toast.error("You can only view your own profile");
+      navigate({ to: "/dashboard" });
+    }
+  }, [role, blocked, navigate]);
+
   const { data } = useQuery({
     queryKey: ["profile", id],
+    enabled: !blocked,
     queryFn: async () => {
       const s = await studentsRepo.find(id);
       if (!s) return null;
@@ -33,8 +55,10 @@ function ProfilePage() {
     },
   });
 
+  if (blocked) return null;
   if (!data) return <LoadingState />;
   const { s, assessments, results } = data;
+
 
   const timeline = results
     .slice()
@@ -57,6 +81,26 @@ function ProfilePage() {
         action={<Button size="icon" variant="ghost" onClick={share}><Share2 className="h-4 w-4" /></Button>}
       />
       <div className="space-y-4 px-4 pt-4 pb-6">
+        {readOnlyOther && (
+          <Card><CardContent className="flex items-center gap-2 p-3 text-xs text-muted-foreground">
+            <Lock className="h-4 w-4" /> Read-only view — you cannot edit or assess this athlete.
+          </CardContent></Card>
+        )}
+        {(canEdit || canAssess) && (
+          <div className="flex gap-2">
+            {canEdit && (
+              <Button asChild variant="outline" className="flex-1 gap-2">
+                <Link to="/students/$id/edit" params={{ id }}><Pencil className="h-4 w-4" /> Edit profile</Link>
+              </Button>
+            )}
+            {canAssess && (
+              <Button asChild className="flex-1 gap-2">
+                <Link to="/assessments/new"><Activity className="h-4 w-4" /> New assessment</Link>
+              </Button>
+            )}
+          </div>
+        )}
+
         <Card><CardContent className="p-5">
           <div className="flex items-center gap-4">
             {s.photoDataUrl ? (

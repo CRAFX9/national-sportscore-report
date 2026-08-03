@@ -1,5 +1,10 @@
 // NSRC domain types
-export type UserRole = "coach" | "district_officer" | "sai_official" | "parent";
+export type UserRole =
+  | "student"
+  | "coach"
+  | "district_officer"
+  | "sai_official"
+  | "parent";
 
 export interface User {
   id: string;
@@ -34,12 +39,45 @@ export interface Student {
 }
 
 export type AssessmentType =
+  // fitness & athletics
   | "sprint_30m"
   | "sprint_50m"
   | "broad_jump"
   | "vertical_jump"
   | "shuttle_run"
-  | "reaction_test";
+  | "endurance_run"
+  | "sit_ups"
+  | "push_ups"
+  | "medicine_ball_throw"
+  | "flexibility_test"
+  | "balance_test"
+  | "reaction_test"
+  // health & wellness
+  | "health_vitals"
+  | "posture_screen"
+  | "vision_test"
+  | "respiratory_test"
+  // sport skills
+  | "football_dribble"
+  | "basketball_shooting"
+  | "badminton_footwork"
+  | "athletics_throw"
+  | "swimming_stroke"
+  // game play
+  | "kabaddi_raid"
+  | "kho_kho_agility"
+  | "hockey_dribble"
+  | "volleyball_serve"
+  | "wrestling_stance";
+
+/** Live (real-time) analysis captured while the video was being recorded. */
+export interface LiveAnalysis {
+  activity: string;
+  confidence: number;
+  motionPeak: number;
+  visibleFraction: number;
+  events: { at: number; label: string }[];
+}
 
 export interface Assessment {
   id: string;
@@ -48,7 +86,21 @@ export interface Assessment {
   createdAt: number;
   videoRef?: string; // placeholder marker for locally stored video
   syncStatus: "pending" | "synced" | "error";
+  liveAnalysis?: LiveAnalysis;
 }
+
+export interface Coach {
+  id: string;
+  name: string;
+  phone: string;
+  school: string;
+  district: string;
+  state: string;
+  specialization: string;
+  active: boolean;
+  createdAt: number;
+}
+
 
 export interface AssessmentResult {
   id: string;

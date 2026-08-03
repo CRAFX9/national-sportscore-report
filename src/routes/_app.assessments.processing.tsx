@@ -8,6 +8,7 @@ import { useAssessmentDraft } from "@/stores/assessment-draft";
 import { resultsRepo, reportsRepo, studentsRepo, assessmentsRepo } from "@/lib/repositories";
 import type { AssessmentResult, Report } from "@/lib/types";
 import { labelForType } from "@/lib/seed";
+import { aiKindForAssessment } from "@/lib/catalog";
 import { runPipeline, type PipelineStage } from "@/ai";
 
 export const Route = createFileRoute("/_app/assessments/processing")({
@@ -43,7 +44,7 @@ function ProcessingPage() {
       const assessment = (await assessmentsRepo.all()).find((a) => a.id === draft.lastAssessmentId);
       if (!student || !assessment) return;
       const report = await runPipeline({
-        kind: assessment.type,
+        kind: aiKindForAssessment(assessment.type),
         video: { uri: assessment.videoRef ?? `local://${assessment.id}`, fps: 30, height: 720, recordedAt: assessment.createdAt, deviceClockAt: Date.now() },
         athlete: {
           athleteId: student.athleteId, age: student.age,
