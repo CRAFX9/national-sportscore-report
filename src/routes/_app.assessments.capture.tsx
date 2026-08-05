@@ -7,6 +7,8 @@ import { StatusChip } from "@/components/nsrc/status-chip";
 import { useAssessmentDraft } from "@/stores/assessment-draft";
 import { assessmentsRepo } from "@/lib/repositories";
 import { labelForType } from "@/lib/seed";
+import { voiceForAssessment } from "@/lib/catalog";
+import { speak, stopSpeaking } from "@/lib/speech";
 import type { Assessment } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -283,6 +285,13 @@ function CapturePage() {
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  // Spoken setup guidance for the selected test, played once when the camera opens.
+  useEffect(() => {
+    if (!current) return;
+    const t = setTimeout(() => speak(voiceForAssessment(current), draft.language), 500);
+    return () => { clearTimeout(t); stopSpeaking(); };
+  }, [current, draft.language]);
 
   useEffect(() => {
     if (!recording) return;
