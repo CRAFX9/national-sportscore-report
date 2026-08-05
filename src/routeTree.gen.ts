@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSyncRouteImport } from './routes/_app.sync'
+import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMeRouteImport } from './routes/_app.me'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCoachesRouteImport } from './routes/_app.coaches'
@@ -43,6 +44,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppSyncRoute = AppSyncRouteImport.update({
   id: '/sync',
   path: '/sync',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMeRoute = AppMeRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/coaches': typeof AppCoachesRoute
   '/dashboard': typeof AppDashboardRoute
   '/me': typeof AppMeRoute
+  '/notifications': typeof AppNotificationsRoute
   '/sync': typeof AppSyncRoute
   '/assessments/capture': typeof AppAssessmentsCaptureRoute
   '/assessments/instructions': typeof AppAssessmentsInstructionsRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/coaches': typeof AppCoachesRoute
   '/dashboard': typeof AppDashboardRoute
   '/me': typeof AppMeRoute
+  '/notifications': typeof AppNotificationsRoute
   '/sync': typeof AppSyncRoute
   '/assessments/capture': typeof AppAssessmentsCaptureRoute
   '/assessments/instructions': typeof AppAssessmentsInstructionsRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/_app/coaches': typeof AppCoachesRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/me': typeof AppMeRoute
+  '/_app/notifications': typeof AppNotificationsRoute
   '/_app/sync': typeof AppSyncRoute
   '/_app/assessments/capture': typeof AppAssessmentsCaptureRoute
   '/_app/assessments/instructions': typeof AppAssessmentsInstructionsRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/coaches'
     | '/dashboard'
     | '/me'
+    | '/notifications'
     | '/sync'
     | '/assessments/capture'
     | '/assessments/instructions'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/coaches'
     | '/dashboard'
     | '/me'
+    | '/notifications'
     | '/sync'
     | '/assessments/capture'
     | '/assessments/instructions'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/_app/coaches'
     | '/_app/dashboard'
     | '/_app/me'
+    | '/_app/notifications'
     | '/_app/sync'
     | '/_app/assessments/capture'
     | '/_app/assessments/instructions'
@@ -250,6 +262,13 @@ declare module '@tanstack/react-router' {
       path: '/sync'
       fullPath: '/sync'
       preLoaderRoute: typeof AppSyncRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/me': {
@@ -343,6 +362,7 @@ interface AppRouteChildren {
   AppCoachesRoute: typeof AppCoachesRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppMeRoute: typeof AppMeRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppSyncRoute: typeof AppSyncRoute
   AppAssessmentsCaptureRoute: typeof AppAssessmentsCaptureRoute
   AppAssessmentsInstructionsRoute: typeof AppAssessmentsInstructionsRoute
@@ -359,6 +379,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCoachesRoute: AppCoachesRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppMeRoute: AppMeRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppSyncRoute: AppSyncRoute,
   AppAssessmentsCaptureRoute: AppAssessmentsCaptureRoute,
   AppAssessmentsInstructionsRoute: AppAssessmentsInstructionsRoute,
@@ -381,13 +402,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
