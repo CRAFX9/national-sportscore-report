@@ -11,7 +11,6 @@ import {
 } from "@/lib/repositories";
 import { useAuth } from "@/stores/auth";
 import { can, ROLE_LABELS } from "@/lib/permissions";
-import { labelForType } from "@/lib/seed";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -174,16 +173,23 @@ function StaffDashboard() {
             />
           )}
           {can(role, "analytics") && (
-            <StatCard icon={<BarChart3 className="h-5 w-5" />} label="Reports" value={stats?.recentReports.length ?? "—"} />
+            <Link to="/reports">
+              <StatCard icon={<BarChart3 className="h-5 w-5" />} label="Reports" value={stats?.recentReports.length ?? "—"} />
+            </Link>
           )}
           <StatCard icon={<Trophy className="h-5 w-5" />} label="Top Athletes" value={stats?.top.length ?? "—"} />
         </div>
 
-        {can(role, "manageCoaches") && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {can(role, "manageCoaches") && (
+            <Button asChild variant="outline" className="w-full gap-2">
+              <Link to="/coaches"><Award className="h-4 w-4" /> Manage coach profiles</Link>
+            </Button>
+          )}
           <Button asChild variant="outline" className="w-full gap-2">
-            <Link to="/coaches"><Award className="h-4 w-4" /> Manage coach profiles</Link>
+            <Link to="/reports"><BarChart3 className="h-4 w-4" /> Browse all AI reports</Link>
           </Button>
-        )}
+        </div>
 
         <section>
           <SectionHeader title="Top Athletes" to="/students" />
@@ -217,7 +223,7 @@ function StaffDashboard() {
         </section>
 
         <section>
-          <SectionHeader title="Recent Reports" to="/students" />
+          <SectionHeader title="Recent Reports" to="/reports" />
           <div className="space-y-2">
             {stats?.recentReports.length === 0 ? (
               <p className="text-sm text-muted-foreground">No reports yet.</p>
@@ -280,5 +286,3 @@ function SectionHeader({ title, to }: { title: string; to: string }) {
     </div>
   );
 }
-
-void labelForType;

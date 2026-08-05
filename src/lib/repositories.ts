@@ -86,3 +86,14 @@ export const syncRepo = {
   update: (id: string, patch: Partial<SyncItem>) => db.sync_queue.update(id, patch),
   markDone: (id: string) => db.sync_queue.update(id, { status: "done" }),
 };
+
+export const notificationsRepo = {
+  all: () => db.notifications.orderBy("createdAt").reverse().toArray(),
+  unreadCount: () => db.notifications.filter((n) => !n.read).count(),
+  markRead: (id: string) => db.notifications.update(id, { read: true }),
+  markAllRead: async () => {
+    const unread = await db.notifications.filter((n) => !n.read).toArray();
+    await Promise.all(unread.map((n) => db.notifications.update(n.id, { read: true })));
+  },
+  remove: (id: string) => db.notifications.delete(id),
+};

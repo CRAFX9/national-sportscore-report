@@ -1,13 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { Activity, Timer, Zap, MoveVertical, MoveHorizontal, Gauge } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Activity, Timer, Zap, MoveVertical, MoveHorizontal, Gauge, HeartPulse, Dumbbell, Trophy,
+} from "lucide-react";
 import { TopBar } from "@/components/nsrc/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { studentsRepo } from "@/lib/repositories";
 import { useAssessmentDraft } from "@/stores/assessment-draft";
-import type { AssessmentType } from "@/lib/types";
+import {
+  ASSESSMENT_CATALOG, CATEGORY_LABELS, type AssessmentCategory,
+} from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -15,20 +19,35 @@ export const Route = createFileRoute("/_app/assessments/new")({
   component: AssessmentSelectPage,
 });
 
-const ASSESSMENTS: { id: AssessmentType; label: string; desc: string; Icon: typeof Activity }[] = [
-  { id: "sprint_30m", label: "30m Sprint", desc: "Acceleration test", Icon: Timer },
-  { id: "sprint_50m", label: "50m Sprint", desc: "Peak speed", Icon: Zap },
-  { id: "broad_jump", label: "Standing Broad Jump", desc: "Explosive power", Icon: MoveHorizontal },
-  { id: "vertical_jump", label: "Vertical Jump", desc: "Lower-body power", Icon: MoveVertical },
-  { id: "shuttle_run", label: "4x10m Shuttle Run", desc: "Agility & change of direction", Icon: Activity },
-  { id: "reaction_test", label: "Reaction Test", desc: "Neuromuscular response", Icon: Gauge },
-];
+const CATEGORY_ORDER: AssessmentCategory[] = ["fitness", "health", "sport", "game"];
+
+const CATEGORY_ICON: Record<AssessmentCategory, typeof Activity> = {
+  fitness: Dumbbell,
+  health: HeartPulse,
+  sport: Trophy,
+  game: Activity,
+};
+
+const TEST_ICON: Record<string, typeof Activity> = {
+  sprint_30m: Timer,
+  sprint_50m: Zap,
+  broad_jump: MoveHorizontal,
+  vertical_jump: MoveVertical,
+  shuttle_run: Activity,
+  reaction_test: Gauge,
+};
 
 function AssessmentSelectPage() {
   const navigate = useNavigate();
   const { data: students = [] } = useQuery({ queryKey: ["students"], queryFn: () => studentsRepo.all() });
   const draft = useAssessmentDraft();
   const [studentId, setStudentId] = useState<string>(draft.studentId ?? "");
+  const [category, setCategory] = useState<AssessmentCategory>("fitness");
+
+  const tests = useMemo(
+    () => ASSESSMENT_CATALOG.filter((a) => a.category === category),
+    [category],
+  );
 
   const proceed = () => {
     if (!studentId) return toast.error("Select an athlete first");
@@ -62,10 +81,39 @@ function AssessmentSelectPage() {
           </CardContent>
         </Card>
 
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {CATEGORY_ORDER.map((c) => {
+            const Icon = CATEGORY_ICON[c];
+            const count = ASSESSMENT_CATALOG.filter((a) => a.category === c && draft.selected.includes(a.id)).length;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCategory(c)}
+                className={cn(
+                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                  category === c
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:bg-muted",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {CATEGORY_LABELS[c]}
+                {count > 0 && (
+                  <span className="rounded-full bg-background/25 px-1.5 text-[10px] font-bold">{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Select tests (multi)</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {CATEGORY_LABELS[category]} — select tests (multi)
+          </p>
           <div className="grid grid-cols-2 gap-3">
-            {ASSESSMENTS.map(({ id, label, desc, Icon }) => {
+            {tests.map(({ id, label, desc }) => {
+              const Icon = TEST_ICON[id] ?? CATEGORY_ICON[category];
               const active = draft.selected.includes(id);
               return (
                 <button

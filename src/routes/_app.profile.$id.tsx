@@ -65,6 +65,51 @@ function ProfilePage() {
     .sort((a, b) => a.createdAt - b.createdAt)
     .map((r) => ({ date: format(r.createdAt, "d MMM"), score: r.overall }));
 
+  const exportReport = () => {
+    const best = results[0];
+    const lines = [
+      "NATIONAL SPORTS REPORT CARD — DIGITAL SCOUT PROFILE",
+      "".padEnd(56, "="),
+      `Athlete        : ${s.name} (${s.athleteId})`,
+      `Age / Gender   : ${s.age}y / ${s.gender}`,
+      `Anthropometry  : ${s.heightCm} cm, ${s.weightKg} kg`,
+      `School         : ${s.school}`,
+      `Location       : ${s.village}, ${s.district}, ${s.state}`,
+      `Guardian       : ${s.parentName} (${s.parentPhone})`,
+      `Medical notes  : ${s.medicalConditions || "None recorded"}`,
+      "",
+      "LATEST RESULT",
+      "".padEnd(56, "-"),
+      best
+        ? [
+            `Overall score      : ${best.overall}/100`,
+            `National percentile: ${best.nationalPercentile}%`,
+            `District rank      : #${best.districtRank}`,
+            `Metrics            : ${Object.entries(best.metrics).map(([k, v]) => `${k} ${v}`).join(", ")}`,
+            `Recommended sports : ${best.recommendedSports.join(", ")}`,
+            `Strengths          : ${best.strengths.join(", ")}`,
+            `Focus areas        : ${best.improvements.join(", ")}`,
+          ].join("\n")
+        : "No assessment results recorded yet.",
+      "",
+      "ASSESSMENT HISTORY",
+      "".padEnd(56, "-"),
+      ...(assessments.length
+        ? assessments.map((a) => `${format(a.createdAt, "dd MMM yyyy")}  ${labelForType(a.type)}  [${a.syncStatus}]`)
+        : ["No assessments yet."]),
+      "",
+      `Generated ${format(Date.now(), "dd MMM yyyy, HH:mm")} • NSRC offline export`,
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `NSRC-${s.athleteId}-report.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Report downloaded");
+  };
+
   const share = async () => {
     const url = window.location.href;
     if (navigator.share) {
@@ -182,7 +227,7 @@ function ProfilePage() {
           <p className="text-xs text-muted-foreground">Scan to verify profile authenticity.</p>
         </CardContent></Card>
 
-        <Button variant="outline" className="w-full gap-2" onClick={() => toast.info("PDF export queued (placeholder)")}>
+        <Button variant="outline" className="w-full gap-2" onClick={exportReport}>
           <Download className="h-4 w-4" /> Download PDF Report
         </Button>
       </div>

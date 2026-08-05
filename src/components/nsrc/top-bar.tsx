@@ -2,6 +2,8 @@ import { ArrowLeft, Bell, Moon, Sun } from "lucide-react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useTheme } from "@/stores/theme";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { notificationsRepo } from "@/lib/repositories";
 
 interface TopBarProps {
   title: string;
@@ -13,6 +15,10 @@ interface TopBarProps {
 export function TopBar({ title, subtitle, back, action }: TopBarProps) {
   const router = useRouter();
   const { mode, toggle } = useTheme();
+  const { data: unread = 0 } = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: () => notificationsRepo.unreadCount(),
+  });
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur">
       <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 py-3">
@@ -33,8 +39,15 @@ export function TopBar({ title, subtitle, back, action }: TopBarProps) {
         <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
           {mode === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
-        <Button asChild variant="ghost" size="icon" aria-label="Notifications">
-          <Link to="/sync"><Bell className="h-5 w-5" /></Link>
+        <Button asChild variant="ghost" size="icon" aria-label="Notifications" className="relative">
+          <Link to="/notifications">
+            <Bell className="h-5 w-5" />
+            {unread > 0 && (
+              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-tertiary px-1 text-[10px] font-bold text-on-tertiary-container">
+                {unread}
+              </span>
+            )}
+          </Link>
         </Button>
       </div>
     </header>

@@ -1,10 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Languages, Volume2 } from "lucide-react";
 import { TopBar } from "@/components/nsrc/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAssessmentDraft } from "@/stores/assessment-draft";
 import { labelForType } from "@/lib/seed";
+import { voiceForAssessment } from "@/lib/catalog";
+import { speak, speechSupported, stopSpeaking } from "@/lib/speech";
 
 export const Route = createFileRoute("/_app/assessments/instructions")({
   component: InstructionsPage,
@@ -23,6 +26,9 @@ function InstructionsPage() {
   const navigate = useNavigate();
   const draft = useAssessmentDraft();
   const current = draft.selected[draft.currentIndex];
+  const script = current ? voiceForAssessment(current) : "";
+
+  useEffect(() => () => stopSpeaking(), []);
 
   if (!current) {
     navigate({ to: "/assessments/new" });
@@ -55,8 +61,14 @@ function InstructionsPage() {
             >
               {LANGS.map((l) => <option key={l}>{l}</option>)}
             </select>
-            <Button variant="outline" className="w-full gap-2">
-              <Volume2 className="h-4 w-4" /> Play voice instructions
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              disabled={!speechSupported()}
+              onClick={() => speak(script, draft.language)}
+            >
+              <Volume2 className="h-4 w-4" />
+              {speechSupported() ? "Play voice instructions" : "Voice not supported on this device"}
             </Button>
           </CardContent>
         </Card>
@@ -64,6 +76,7 @@ function InstructionsPage() {
         <Card>
           <CardContent className="space-y-3 p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Setup</p>
+            <p className="rounded-xl bg-muted/60 p-3 text-sm">{script}</p>
             <ol className="space-y-2 text-sm">
               {STEPS.map((s, i) => (
                 <li key={i} className="flex gap-3">
@@ -77,7 +90,7 @@ function InstructionsPage() {
           </CardContent>
         </Card>
 
-        <Button size="lg" className="w-full" onClick={() => navigate({ to: "/assessments/capture" })}>
+        <Button size="lg" className="w-full" onClick={() => { stopSpeaking(); navigate({ to: "/assessments/capture" }); }}>
           I'm ready — Open camera
         </Button>
       </div>
