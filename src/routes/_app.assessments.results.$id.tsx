@@ -6,6 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScoreRing } from "@/components/nsrc/score-ring";
 import { MetricsRadar } from "@/components/nsrc/metrics-radar";
+import { TalentRadar } from "@/components/nsrc/talent-radar";
+import { AssessmentQualityPanel, IntegrityPanel } from "@/components/nsrc/quality-panel";
+import { DevelopmentPlanCard } from "@/components/nsrc/development-plan";
+
 import { StatusChip } from "@/components/nsrc/status-chip";
 import { LoadingState } from "@/components/nsrc/states";
 import { resultsRepo, studentsRepo, videosRepo } from "@/lib/repositories";
@@ -71,10 +75,11 @@ function ResultsPage() {
           </CardContent></Card>
         )}
 
-        <Card><CardContent className="p-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Performance profile</p>
-          <MetricsRadar metrics={r.metrics} />
-        </CardContent></Card>
+        <TalentRadar result={r} />
+        <AssessmentQualityPanel result={r} />
+        <IntegrityPanel result={r} />
+        <DevelopmentPlanCard result={r} />
+
 
         <div className="grid grid-cols-3 gap-2">
           {Object.entries(r.metrics).map(([k, v]) => (

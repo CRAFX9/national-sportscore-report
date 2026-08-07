@@ -115,24 +115,57 @@ export interface Coach {
 }
 
 
+export interface ResultMetrics {
+  speed: number;
+  strength: number;
+  agility: number;
+  power: number;
+  endurance: number;
+  coordination: number;
+  balance?: number;
+  reaction?: number;
+}
+
+/** Camera/frame quality actually measured by the AI pipeline. */
+export interface ResultQuality {
+  lighting: number;    // 0..1
+  sharpness: number;   // 0..1
+  resolution: number;  // 0..1
+  fps: number;
+  reasons: string[];
+}
+
+/** Output of the integrity-verification framework (heuristic checks only). */
+export interface ResultIntegrity {
+  status: "verified" | "review" | "invalid";
+  riskScore: number; // 0..1
+  reasons: string[];
+}
+
 export interface AssessmentResult {
   id: string;
   assessmentId: string;
   studentId: string;
   overall: number; // 0–100
-  metrics: {
-    speed: number;
-    strength: number;
-    agility: number;
-    power: number;
-    endurance: number;
-    coordination: number;
-  };
+  metrics: ResultMetrics;
   nationalPercentile: number;
   districtRank: number;
   recommendedSports: string[];
   strengths: string[];
   improvements: string[];
+  /**
+   * Provenance of every number in this record.
+   * "prototype" = heuristic analysers running on the mock pose backend.
+   * "model"     = a real pose/ML model produced the landmarks.
+   */
+  aiMode?: "prototype" | "model";
+  poseBackend?: string;
+  /** Engine-reported confidence 0..1. Absent when not computed. */
+  confidence?: number;
+  quality?: ResultQuality;
+  integrity?: ResultIntegrity;
+  /** Real-time on-device observations captured while recording. */
+  liveAnalysis?: LiveAnalysis;
   createdAt: number;
 }
 
