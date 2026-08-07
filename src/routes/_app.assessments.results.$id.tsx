@@ -71,10 +71,11 @@ function ResultsPage() {
           </CardContent></Card>
         )}
 
-        <Card><CardContent className="p-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Performance profile</p>
-          <MetricsRadar metrics={{ ...r.metrics }} />
-        </CardContent></Card>
+        <TalentRadar result={r} />
+        <AssessmentQualityPanel result={r} />
+        <IntegrityPanel result={r} />
+        <DevelopmentPlanCard result={r} />
+
 
         <div className="grid grid-cols-3 gap-2">
           {Object.entries(r.metrics).map(([k, v]) => (
