@@ -4,6 +4,7 @@ import Dexie, { type Table } from "dexie";
 import type {
   Assessment,
   AssessmentResult,
+  AssessmentVideo,
   Coach,
   NotificationItem,
   Report,
