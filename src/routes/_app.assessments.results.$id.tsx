@@ -73,7 +73,7 @@ function ResultsPage() {
 
         <Card><CardContent className="p-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Performance profile</p>
-          <MetricsRadar metrics={r.metrics} />
+          <MetricsRadar metrics={{ ...r.metrics }} />
         </CardContent></Card>
 
         <div className="grid grid-cols-3 gap-2">
