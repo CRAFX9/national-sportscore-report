@@ -1,8 +1,20 @@
 // Repository pattern over Dexie tables.
 import { db } from "./db";
 import type {
-  Assessment, AssessmentResult, Coach, Report, Student, SyncItem,
+  Assessment, AssessmentResult, AssessmentVideo, Coach, Report, Student, SyncItem,
 } from "./types";
+
+export const videosRepo = {
+  create: (v: AssessmentVideo) => db.videos.add(v),
+  find: (id: string) => db.videos.get(id),
+  byAssessment: (assessmentId: string) =>
+    db.videos.where("assessmentId").equals(assessmentId).first(),
+  byStudent: (studentId: string) =>
+    db.videos.where("studentId").equals(studentId).reverse().sortBy("createdAt"),
+  markSaved: (id: string) => db.videos.update(id, { savedToGallery: true }),
+  /** Only ever called from an explicit user action — analysis never deletes videos. */
+  remove: (id: string) => db.videos.delete(id),
+};
 
 const DEMO_COACHES: Omit<Coach, "id" | "createdAt">[] = [
   { name: "Ramesh Deshmukh", phone: "+91 9822011223", school: "SAI Sports Academy", district: "Pune", state: "Maharashtra", specialization: "Athletics — Sprints", active: true },

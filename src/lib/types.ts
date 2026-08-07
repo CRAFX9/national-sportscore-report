@@ -89,6 +89,19 @@ export interface Assessment {
   liveAnalysis?: LiveAnalysis;
 }
 
+export interface AssessmentVideo {
+  id: string;
+  assessmentId: string;
+  studentId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  durationSec: number;
+  blob: Blob;
+  createdAt: number;
+  savedToGallery: boolean;
+}
+
 export interface Coach {
   id: string;
   name: string;

@@ -21,6 +21,7 @@ import { Route as AppCoachesRouteImport } from './routes/_app.coaches'
 import { Route as AppStudentsIndexRouteImport } from './routes/_app.students.index'
 import { Route as AppStudentsNewRouteImport } from './routes/_app.students.new'
 import { Route as AppProfileIdRouteImport } from './routes/_app.profile.$id'
+import { Route as AppAssessmentsVideoRouteImport } from './routes/_app.assessments.video'
 import { Route as AppAssessmentsProcessingRouteImport } from './routes/_app.assessments.processing'
 import { Route as AppAssessmentsNewRouteImport } from './routes/_app.assessments.new'
 import { Route as AppAssessmentsInstructionsRouteImport } from './routes/_app.assessments.instructions'
@@ -87,6 +88,11 @@ const AppProfileIdRoute = AppProfileIdRouteImport.update({
   path: '/profile/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAssessmentsVideoRoute = AppAssessmentsVideoRouteImport.update({
+  id: '/assessments/video',
+  path: '/assessments/video',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAssessmentsProcessingRoute =
   AppAssessmentsProcessingRouteImport.update({
     id: '/assessments/processing',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/assessments/instructions': typeof AppAssessmentsInstructionsRoute
   '/assessments/new': typeof AppAssessmentsNewRoute
   '/assessments/processing': typeof AppAssessmentsProcessingRoute
+  '/assessments/video': typeof AppAssessmentsVideoRoute
   '/profile/$id': typeof AppProfileIdRoute
   '/students/new': typeof AppStudentsNewRoute
   '/students/': typeof AppStudentsIndexRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/assessments/instructions': typeof AppAssessmentsInstructionsRoute
   '/assessments/new': typeof AppAssessmentsNewRoute
   '/assessments/processing': typeof AppAssessmentsProcessingRoute
+  '/assessments/video': typeof AppAssessmentsVideoRoute
   '/profile/$id': typeof AppProfileIdRoute
   '/students/new': typeof AppStudentsNewRoute
   '/students': typeof AppStudentsIndexRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/_app/assessments/instructions': typeof AppAssessmentsInstructionsRoute
   '/_app/assessments/new': typeof AppAssessmentsNewRoute
   '/_app/assessments/processing': typeof AppAssessmentsProcessingRoute
+  '/_app/assessments/video': typeof AppAssessmentsVideoRoute
   '/_app/profile/$id': typeof AppProfileIdRoute
   '/_app/students/new': typeof AppStudentsNewRoute
   '/_app/students/': typeof AppStudentsIndexRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/assessments/instructions'
     | '/assessments/new'
     | '/assessments/processing'
+    | '/assessments/video'
     | '/profile/$id'
     | '/students/new'
     | '/students/'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/assessments/instructions'
     | '/assessments/new'
     | '/assessments/processing'
+    | '/assessments/video'
     | '/profile/$id'
     | '/students/new'
     | '/students'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_app/assessments/instructions'
     | '/_app/assessments/new'
     | '/_app/assessments/processing'
+    | '/_app/assessments/video'
     | '/_app/profile/$id'
     | '/_app/students/new'
     | '/_app/students/'
@@ -332,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/assessments/video': {
+      id: '/_app/assessments/video'
+      path: '/assessments/video'
+      fullPath: '/assessments/video'
+      preLoaderRoute: typeof AppAssessmentsVideoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/assessments/processing': {
       id: '/_app/assessments/processing'
       path: '/assessments/processing'
@@ -388,6 +407,7 @@ interface AppRouteChildren {
   AppAssessmentsInstructionsRoute: typeof AppAssessmentsInstructionsRoute
   AppAssessmentsNewRoute: typeof AppAssessmentsNewRoute
   AppAssessmentsProcessingRoute: typeof AppAssessmentsProcessingRoute
+  AppAssessmentsVideoRoute: typeof AppAssessmentsVideoRoute
   AppProfileIdRoute: typeof AppProfileIdRoute
   AppStudentsNewRoute: typeof AppStudentsNewRoute
   AppStudentsIndexRoute: typeof AppStudentsIndexRoute
@@ -406,6 +426,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAssessmentsInstructionsRoute: AppAssessmentsInstructionsRoute,
   AppAssessmentsNewRoute: AppAssessmentsNewRoute,
   AppAssessmentsProcessingRoute: AppAssessmentsProcessingRoute,
+  AppAssessmentsVideoRoute: AppAssessmentsVideoRoute,
   AppProfileIdRoute: AppProfileIdRoute,
   AppStudentsNewRoute: AppStudentsNewRoute,
   AppStudentsIndexRoute: AppStudentsIndexRoute,

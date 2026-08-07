@@ -8,7 +8,10 @@ import { ScoreRing } from "@/components/nsrc/score-ring";
 import { MetricsRadar } from "@/components/nsrc/metrics-radar";
 import { StatusChip } from "@/components/nsrc/status-chip";
 import { LoadingState } from "@/components/nsrc/states";
-import { resultsRepo, studentsRepo } from "@/lib/repositories";
+import { resultsRepo, studentsRepo, videosRepo } from "@/lib/repositories";
+import { downloadBlob, formatBytes } from "@/lib/video";
+import { useEffect, useMemo } from "react";
+import { Download, Video } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/assessments/results/$id")({
@@ -24,9 +27,14 @@ function ResultsPage() {
       const r = await resultsRepo.find(id);
       if (!r) return null;
       const s = await studentsRepo.find(r.studentId);
-      return { r, s };
+      const v = await videosRepo.byAssessment(r.assessmentId);
+      return { r, s, v };
     },
   });
+
+  const video = data?.v ?? null;
+  const videoUrl = useMemo(() => (video ? URL.createObjectURL(video.blob) : null), [video]);
+  useEffect(() => () => { if (videoUrl) URL.revokeObjectURL(videoUrl); }, [videoUrl]);
 
   if (!data) return <LoadingState label="Loading report…" />;
   const { r, s } = data;
@@ -47,6 +55,21 @@ function ResultsPage() {
             </div>
           </div>
         </CardContent></Card>
+
+        {videoUrl && video && (
+          <Card><CardContent className="space-y-3 p-4">
+            <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Video className="h-3.5 w-3.5" /> Recorded assessment video
+            </p>
+            <video src={videoUrl} controls playsInline className="w-full rounded-xl bg-black" />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="break-all font-mono text-[11px] text-muted-foreground">{video.filename} • {formatBytes(video.sizeBytes)}</p>
+              <Button size="sm" variant="outline" onClick={() => downloadBlob(video.blob, video.filename)}>
+                <Download className="mr-2 h-4 w-4" /> Save video
+              </Button>
+            </div>
+          </CardContent></Card>
+        )}
 
         <Card><CardContent className="p-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Performance profile</p>

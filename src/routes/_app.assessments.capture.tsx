@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Play, Square, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Camera, Play, Square, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { TopBar } from "@/components/nsrc/top-bar";
 import { Button } from "@/components/ui/button";
 import { StatusChip } from "@/components/nsrc/status-chip";
 import { useAssessmentDraft } from "@/stores/assessment-draft";
-import { assessmentsRepo } from "@/lib/repositories";
+import { assessmentsRepo, studentsRepo, videosRepo } from "@/lib/repositories";
+import { buildVideoFilename, extForMime, pickRecorderMime } from "@/lib/video";
 import { labelForType } from "@/lib/seed";
 import { voiceForAssessment } from "@/lib/catalog";
 import { speak, stopSpeaking } from "@/lib/speech";
@@ -32,6 +33,9 @@ function CapturePage() {
   const bboxRef = useRef<{ x: number; y: number; w: number; h: number; score: number } | null>(null);
   const smoothRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const maskRef = useRef<{ data: Uint8Array; width: number; height: number; edge: Uint8Array } | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -282,6 +286,7 @@ function CapturePage() {
       if (detectTimer) clearInterval(detectTimer);
       if (qualityTimer) clearInterval(qualityTimer);
       if (rafRef) cancelAnimationFrame(rafRef);
+      try { if (recorderRef.current?.state === "recording") recorderRef.current.stop(); } catch { /* ignore */ }
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
@@ -301,21 +306,82 @@ function CapturePage() {
 
   if (!current) { navigate({ to: "/assessments/new" }); return null; }
 
+  const startRecording = () => {
+    const stream = streamRef.current;
+    if (!stream) { toast.error("Camera is not ready yet"); return; }
+    try {
+      const mime = pickRecorderMime();
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorderRef.current = rec;
+      rec.start(1000);
+      setSeconds(0);
+      setRecording(true);
+    } catch {
+      toast.error("Recording is not supported on this device");
+    }
+  };
+
   const stop = async () => {
     setRecording(false);
     if (!draft.studentId) return;
-    const a: Assessment = {
-      id: crypto.randomUUID(),
-      studentId: draft.studentId,
-      type: current,
-      createdAt: Date.now(),
-      videoRef: `local://${crypto.randomUUID()}.mp4`,
-      syncStatus: "pending",
-    };
-    await assessmentsRepo.create(a);
-    draft.setLast(a.id);
-    toast.success("Video saved locally");
-    navigate({ to: "/assessments/processing" });
+    setSaving(true);
+    try {
+      const rec = recorderRef.current;
+      const blob = await new Promise<Blob | null>((resolve) => {
+        if (!rec || rec.state === "inactive") { resolve(null); return; }
+        rec.onstop = () => resolve(new Blob(chunksRef.current, { type: rec.mimeType || "video/webm" }));
+        rec.stop();
+      });
+      recorderRef.current = null;
+
+      const assessmentId = crypto.randomUUID();
+      const student = await studentsRepo.find(draft.studentId);
+      const now = Date.now();
+      let videoId: string | null = null;
+
+      if (blob && blob.size > 0) {
+        videoId = crypto.randomUUID();
+        const mime = blob.type || "video/webm";
+        await videosRepo.create({
+          id: videoId,
+          assessmentId,
+          studentId: draft.studentId,
+          filename: buildVideoFilename(student?.name ?? "Athlete", labelForType(current), now, extForMime(mime)),
+          mimeType: mime,
+          sizeBytes: blob.size,
+          durationSec: seconds,
+          blob,
+          createdAt: now,
+          savedToGallery: false,
+        });
+      }
+
+      const a: Assessment = {
+        id: assessmentId,
+        studentId: draft.studentId,
+        type: current,
+        createdAt: now,
+        videoRef: videoId ? `idb://videos/${videoId}` : `local://${assessmentId}.mp4`,
+        syncStatus: "pending",
+      };
+      await assessmentsRepo.create(a);
+      draft.setLast(a.id);
+      draft.setLastVideo(videoId);
+
+      if (videoId) {
+        toast.success("Assessment video saved successfully.");
+        navigate({ to: "/assessments/video" });
+      } else {
+        toast.warning("Recording unavailable on this device — continuing with analysis.");
+        navigate({ to: "/assessments/processing" });
+      }
+    } catch {
+      toast.error("Could not save the assessment video. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -371,8 +437,13 @@ function CapturePage() {
         {/* Controls */}
         <div className="absolute bottom-6 left-0 right-0 flex justify-center">
           {recording ? (
-            <button onClick={stop} className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive text-destructive-foreground elevation-3">
-              <Square className="h-6 w-6" />
+            <button
+              onClick={stop}
+              disabled={saving}
+              aria-label="Stop recording"
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive text-destructive-foreground elevation-3 disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="h-6 w-6 animate-spin" /> : <Square className="h-6 w-6" />}
             </button>
           ) : (
             <button
@@ -382,7 +453,7 @@ function CapturePage() {
                 if (!lightingOk) { toast.error("Lighting is poor"); return; }
                 if (!steady) { toast.error("Hold the camera steady"); return; }
                 if (!frameOk) { toast.error("Frame is blurry"); return; }
-                setSeconds(0); setRecording(true);
+                startRecording();
               }}
               className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground text-primary elevation-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -392,7 +463,7 @@ function CapturePage() {
         </div>
 
         <div className="pointer-events-none absolute bottom-2 left-0 right-0 text-center text-[10px] uppercase tracking-widest text-primary-foreground/70">
-          <Camera className="mr-1 inline h-3 w-3" /> AI skeleton overlay — placeholder
+          <Camera className="mr-1 inline h-3 w-3" /> {saving ? "Saving assessment video…" : "Live on-device body tracking"}
         </div>
       </div>
     </>

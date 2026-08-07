@@ -4,6 +4,7 @@ import Dexie, { type Table } from "dexie";
 import type {
   Assessment,
   AssessmentResult,
+  AssessmentVideo,
   Coach,
   NotificationItem,
   Report,
@@ -21,6 +22,7 @@ class NSRCDatabase extends Dexie {
   reports!: Table<Report, string>;
   sync_queue!: Table<SyncItem, string>;
   notifications!: Table<NotificationItem, string>;
+  videos!: Table<AssessmentVideo, string>;
 
   constructor() {
     super("nsrc_db");
@@ -35,6 +37,9 @@ class NSRCDatabase extends Dexie {
     });
     this.version(2).stores({
       coaches: "id, name, district, active, createdAt",
+    });
+    this.version(3).stores({
+      videos: "id, assessmentId, studentId, createdAt",
     });
   }
 }
