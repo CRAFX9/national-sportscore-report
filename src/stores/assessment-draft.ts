@@ -7,12 +7,14 @@ interface DraftState {
   currentIndex: number;
   language: string;
   lastAssessmentId: string | null;
+  lastVideoId: string | null;
   setStudent: (id: string) => void;
   toggle: (t: AssessmentType) => void;
   setLanguage: (l: string) => void;
   next: () => void;
   reset: () => void;
   setLast: (id: string) => void;
+  setLastVideo: (id: string | null) => void;
 }
 
 export const useAssessmentDraft = create<DraftState>((set, get) => ({
@@ -21,6 +23,7 @@ export const useAssessmentDraft = create<DraftState>((set, get) => ({
   currentIndex: 0,
   language: "English",
   lastAssessmentId: null,
+  lastVideoId: null,
   setStudent: (id) => set({ studentId: id }),
   toggle: (t) => {
     const cur = get().selected;
@@ -28,6 +31,7 @@ export const useAssessmentDraft = create<DraftState>((set, get) => ({
   },
   setLanguage: (l) => set({ language: l }),
   next: () => set({ currentIndex: get().currentIndex + 1 }),
-  reset: () => set({ studentId: null, selected: [], currentIndex: 0, lastAssessmentId: null }),
+  reset: () => set({ studentId: null, selected: [], currentIndex: 0, lastAssessmentId: null, lastVideoId: null }),
   setLast: (id) => set({ lastAssessmentId: id }),
+  setLastVideo: (id) => set({ lastVideoId: id }),
 }));
