@@ -74,7 +74,27 @@ function ProcessingPage() {
         recommendedSports: report.recommendations.map((x) => x.sport),
         strengths: report.strengths,
         improvements: report.improvements,
+        // Provenance + measured quality/integrity, so the UI never has to invent numbers.
+        aiMode: "prototype",
+        poseBackend: "mock",
+        confidence: report.scores.confidence,
+        quality: {
+          lighting: report.quality.lighting,
+          sharpness: report.quality.sharpness,
+          resolution: report.quality.resolution,
+          fps: report.quality.fps,
+          reasons: report.quality.reasons,
+        },
+        integrity: {
+          status: report.antiCheat.recommendation === "accept"
+            ? "verified"
+            : report.antiCheat.recommendation === "review" ? "review" : "invalid",
+          riskScore: report.antiCheat.riskScore,
+          reasons: report.antiCheat.reasons,
+        },
+        liveAnalysis: assessment.liveAnalysis,
         createdAt: Date.now(),
+
       };
       await resultsRepo.create(r);
       const rep: Report = {
