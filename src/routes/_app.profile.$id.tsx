@@ -189,7 +189,6 @@ function ProfilePage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            </div>
             <Button asChild variant="outline" size="sm" className="mt-3 w-full">
               <Link to="/timeline/$id" params={{ id: s.id }}>Open full performance timeline</Link>
             </Button>
