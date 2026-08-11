@@ -17,6 +17,7 @@ import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMeRouteImport } from './routes/_app.me'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCompareRouteImport } from './routes/_app.compare'
 import { Route as AppCoachesRouteImport } from './routes/_app.coaches'
 import { Route as AppStudentsIndexRouteImport } from './routes/_app.students.index'
 import { Route as AppTimelineIdRouteImport } from './routes/_app.timeline.$id'
@@ -67,6 +68,11 @@ const AppMeRoute = AppMeRouteImport.update({
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCompareRoute = AppCompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCoachesRoute = AppCoachesRouteImport.update({
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/coaches': typeof AppCoachesRoute
+  '/compare': typeof AppCompareRoute
   '/dashboard': typeof AppDashboardRoute
   '/me': typeof AppMeRoute
   '/notifications': typeof AppNotificationsRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/coaches': typeof AppCoachesRoute
+  '/compare': typeof AppCompareRoute
   '/dashboard': typeof AppDashboardRoute
   '/me': typeof AppMeRoute
   '/notifications': typeof AppNotificationsRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/coaches': typeof AppCoachesRoute
+  '/_app/compare': typeof AppCompareRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/me': typeof AppMeRoute
   '/_app/notifications': typeof AppNotificationsRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/coaches'
+    | '/compare'
     | '/dashboard'
     | '/me'
     | '/notifications'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/coaches'
+    | '/compare'
     | '/dashboard'
     | '/me'
     | '/notifications'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/coaches'
+    | '/_app/compare'
     | '/_app/dashboard'
     | '/_app/me'
     | '/_app/notifications'
@@ -326,6 +338,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/compare': {
+      id: '/_app/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof AppCompareRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/coaches': {
@@ -417,6 +436,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCoachesRoute: typeof AppCoachesRoute
+  AppCompareRoute: typeof AppCompareRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppMeRoute: typeof AppMeRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -437,6 +457,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCoachesRoute: AppCoachesRoute,
+  AppCompareRoute: AppCompareRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppMeRoute: AppMeRoute,
   AppNotificationsRoute: AppNotificationsRoute,
@@ -465,13 +486,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
