@@ -189,8 +189,12 @@ function ProfilePage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+            <Button asChild variant="outline" size="sm" className="mt-3 w-full">
+              <Link to="/timeline/$id" params={{ id: s.id }}>Open full performance timeline</Link>
+            </Button>
           </CardContent></Card>
         )}
+
 
         <Card><CardContent className="p-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Assessment history</p>

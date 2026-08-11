@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Users, Activity, RefreshCw, User, Award } from "lucide-react";
+import { Home, Users, Activity, RefreshCw, User, Award, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/stores/auth";
 import { can } from "@/lib/permissions";
@@ -24,6 +24,7 @@ export function BottomNav() {
   }
   if (can(role, "assess")) items.push({ to: "/assessments/new", label: "Assess", Icon: Activity });
   if (can(role, "manageCoaches")) items.push({ to: "/coaches", label: "Coaches", Icon: Award });
+  if (can(role, "analytics")) items.push({ to: "/analytics", label: "Analytics", Icon: BarChart3 });
   if (can(role, "sync")) items.push({ to: "/sync", label: "Sync", Icon: RefreshCw });
   items.push({ to: "/me", label: "Me", Icon: User });
 

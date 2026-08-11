@@ -14,11 +14,15 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSyncRouteImport } from './routes/_app.sync'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
+import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMeRouteImport } from './routes/_app.me'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCompareRouteImport } from './routes/_app.compare'
 import { Route as AppCoachesRouteImport } from './routes/_app.coaches'
+import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppStudentsIndexRouteImport } from './routes/_app.students.index'
+import { Route as AppTimelineIdRouteImport } from './routes/_app.timeline.$id'
 import { Route as AppStudentsNewRouteImport } from './routes/_app.students.new'
 import { Route as AppProfileIdRouteImport } from './routes/_app.profile.$id'
 import { Route as AppAssessmentsVideoRouteImport } from './routes/_app.assessments.video'
@@ -53,6 +57,11 @@ const AppReportsRoute = AppReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPipelineRoute = AppPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -68,14 +77,29 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCompareRoute = AppCompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCoachesRoute = AppCoachesRouteImport.update({
   id: '/coaches',
   path: '/coaches',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppStudentsIndexRoute = AppStudentsIndexRouteImport.update({
   id: '/students/',
   path: '/students/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTimelineIdRoute = AppTimelineIdRouteImport.update({
+  id: '/timeline/$id',
+  path: '/timeline/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppStudentsNewRoute = AppStudentsNewRouteImport.update({
@@ -129,10 +153,13 @@ const AppAssessmentsResultsIdRoute = AppAssessmentsResultsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/analytics': typeof AppAnalyticsRoute
   '/coaches': typeof AppCoachesRoute
+  '/compare': typeof AppCompareRoute
   '/dashboard': typeof AppDashboardRoute
   '/me': typeof AppMeRoute
   '/notifications': typeof AppNotificationsRoute
+  '/pipeline': typeof AppPipelineRoute
   '/reports': typeof AppReportsRoute
   '/sync': typeof AppSyncRoute
   '/assessments/capture': typeof AppAssessmentsCaptureRoute
@@ -142,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/assessments/video': typeof AppAssessmentsVideoRoute
   '/profile/$id': typeof AppProfileIdRoute
   '/students/new': typeof AppStudentsNewRoute
+  '/timeline/$id': typeof AppTimelineIdRoute
   '/students/': typeof AppStudentsIndexRoute
   '/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
   '/students/$id/edit': typeof AppStudentsIdEditRoute
@@ -149,10 +177,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/analytics': typeof AppAnalyticsRoute
   '/coaches': typeof AppCoachesRoute
+  '/compare': typeof AppCompareRoute
   '/dashboard': typeof AppDashboardRoute
   '/me': typeof AppMeRoute
   '/notifications': typeof AppNotificationsRoute
+  '/pipeline': typeof AppPipelineRoute
   '/reports': typeof AppReportsRoute
   '/sync': typeof AppSyncRoute
   '/assessments/capture': typeof AppAssessmentsCaptureRoute
@@ -162,6 +193,7 @@ export interface FileRoutesByTo {
   '/assessments/video': typeof AppAssessmentsVideoRoute
   '/profile/$id': typeof AppProfileIdRoute
   '/students/new': typeof AppStudentsNewRoute
+  '/timeline/$id': typeof AppTimelineIdRoute
   '/students': typeof AppStudentsIndexRoute
   '/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
   '/students/$id/edit': typeof AppStudentsIdEditRoute
@@ -171,10 +203,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/coaches': typeof AppCoachesRoute
+  '/_app/compare': typeof AppCompareRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/me': typeof AppMeRoute
   '/_app/notifications': typeof AppNotificationsRoute
+  '/_app/pipeline': typeof AppPipelineRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/sync': typeof AppSyncRoute
   '/_app/assessments/capture': typeof AppAssessmentsCaptureRoute
@@ -184,6 +219,7 @@ export interface FileRoutesById {
   '/_app/assessments/video': typeof AppAssessmentsVideoRoute
   '/_app/profile/$id': typeof AppProfileIdRoute
   '/_app/students/new': typeof AppStudentsNewRoute
+  '/_app/timeline/$id': typeof AppTimelineIdRoute
   '/_app/students/': typeof AppStudentsIndexRoute
   '/_app/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
   '/_app/students/$id/edit': typeof AppStudentsIdEditRoute
@@ -193,10 +229,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/analytics'
     | '/coaches'
+    | '/compare'
     | '/dashboard'
     | '/me'
     | '/notifications'
+    | '/pipeline'
     | '/reports'
     | '/sync'
     | '/assessments/capture'
@@ -206,6 +245,7 @@ export interface FileRouteTypes {
     | '/assessments/video'
     | '/profile/$id'
     | '/students/new'
+    | '/timeline/$id'
     | '/students/'
     | '/assessments/results/$id'
     | '/students/$id/edit'
@@ -213,10 +253,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/analytics'
     | '/coaches'
+    | '/compare'
     | '/dashboard'
     | '/me'
     | '/notifications'
+    | '/pipeline'
     | '/reports'
     | '/sync'
     | '/assessments/capture'
@@ -226,6 +269,7 @@ export interface FileRouteTypes {
     | '/assessments/video'
     | '/profile/$id'
     | '/students/new'
+    | '/timeline/$id'
     | '/students'
     | '/assessments/results/$id'
     | '/students/$id/edit'
@@ -234,10 +278,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/analytics'
     | '/_app/coaches'
+    | '/_app/compare'
     | '/_app/dashboard'
     | '/_app/me'
     | '/_app/notifications'
+    | '/_app/pipeline'
     | '/_app/reports'
     | '/_app/sync'
     | '/_app/assessments/capture'
@@ -247,6 +294,7 @@ export interface FileRouteTypes {
     | '/_app/assessments/video'
     | '/_app/profile/$id'
     | '/_app/students/new'
+    | '/_app/timeline/$id'
     | '/_app/students/'
     | '/_app/assessments/results/$id'
     | '/_app/students/$id/edit'
@@ -295,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pipeline': {
+      id: '/_app/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AppPipelineRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/notifications': {
       id: '/_app/notifications'
       path: '/notifications'
@@ -316,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/compare': {
+      id: '/_app/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof AppCompareRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/coaches': {
       id: '/_app/coaches'
       path: '/coaches'
@@ -323,11 +385,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCoachesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/analytics': {
+      id: '/_app/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/students/': {
       id: '/_app/students/'
       path: '/students'
       fullPath: '/students/'
       preLoaderRoute: typeof AppStudentsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/timeline/$id': {
+      id: '/_app/timeline/$id'
+      path: '/timeline/$id'
+      fullPath: '/timeline/$id'
+      preLoaderRoute: typeof AppTimelineIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/students/new': {
@@ -397,10 +473,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppCoachesRoute: typeof AppCoachesRoute
+  AppCompareRoute: typeof AppCompareRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppMeRoute: typeof AppMeRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
+  AppPipelineRoute: typeof AppPipelineRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSyncRoute: typeof AppSyncRoute
   AppAssessmentsCaptureRoute: typeof AppAssessmentsCaptureRoute
@@ -410,16 +489,20 @@ interface AppRouteChildren {
   AppAssessmentsVideoRoute: typeof AppAssessmentsVideoRoute
   AppProfileIdRoute: typeof AppProfileIdRoute
   AppStudentsNewRoute: typeof AppStudentsNewRoute
+  AppTimelineIdRoute: typeof AppTimelineIdRoute
   AppStudentsIndexRoute: typeof AppStudentsIndexRoute
   AppAssessmentsResultsIdRoute: typeof AppAssessmentsResultsIdRoute
   AppStudentsIdEditRoute: typeof AppStudentsIdEditRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAnalyticsRoute: AppAnalyticsRoute,
   AppCoachesRoute: AppCoachesRoute,
+  AppCompareRoute: AppCompareRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppMeRoute: AppMeRoute,
   AppNotificationsRoute: AppNotificationsRoute,
+  AppPipelineRoute: AppPipelineRoute,
   AppReportsRoute: AppReportsRoute,
   AppSyncRoute: AppSyncRoute,
   AppAssessmentsCaptureRoute: AppAssessmentsCaptureRoute,
@@ -429,6 +512,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAssessmentsVideoRoute: AppAssessmentsVideoRoute,
   AppProfileIdRoute: AppProfileIdRoute,
   AppStudentsNewRoute: AppStudentsNewRoute,
+  AppTimelineIdRoute: AppTimelineIdRoute,
   AppStudentsIndexRoute: AppStudentsIndexRoute,
   AppAssessmentsResultsIdRoute: AppAssessmentsResultsIdRoute,
   AppStudentsIdEditRoute: AppStudentsIdEditRoute,
