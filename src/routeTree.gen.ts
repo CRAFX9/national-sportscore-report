@@ -19,6 +19,7 @@ import { Route as AppMeRouteImport } from './routes/_app.me'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCoachesRouteImport } from './routes/_app.coaches'
 import { Route as AppStudentsIndexRouteImport } from './routes/_app.students.index'
+import { Route as AppTimelineIdRouteImport } from './routes/_app.timeline.$id'
 import { Route as AppStudentsNewRouteImport } from './routes/_app.students.new'
 import { Route as AppProfileIdRouteImport } from './routes/_app.profile.$id'
 import { Route as AppAssessmentsVideoRouteImport } from './routes/_app.assessments.video'
@@ -76,6 +77,11 @@ const AppCoachesRoute = AppCoachesRouteImport.update({
 const AppStudentsIndexRoute = AppStudentsIndexRouteImport.update({
   id: '/students/',
   path: '/students/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTimelineIdRoute = AppTimelineIdRouteImport.update({
+  id: '/timeline/$id',
+  path: '/timeline/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppStudentsNewRoute = AppStudentsNewRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/assessments/video': typeof AppAssessmentsVideoRoute
   '/profile/$id': typeof AppProfileIdRoute
   '/students/new': typeof AppStudentsNewRoute
+  '/timeline/$id': typeof AppTimelineIdRoute
   '/students/': typeof AppStudentsIndexRoute
   '/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
   '/students/$id/edit': typeof AppStudentsIdEditRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/assessments/video': typeof AppAssessmentsVideoRoute
   '/profile/$id': typeof AppProfileIdRoute
   '/students/new': typeof AppStudentsNewRoute
+  '/timeline/$id': typeof AppTimelineIdRoute
   '/students': typeof AppStudentsIndexRoute
   '/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
   '/students/$id/edit': typeof AppStudentsIdEditRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/_app/assessments/video': typeof AppAssessmentsVideoRoute
   '/_app/profile/$id': typeof AppProfileIdRoute
   '/_app/students/new': typeof AppStudentsNewRoute
+  '/_app/timeline/$id': typeof AppTimelineIdRoute
   '/_app/students/': typeof AppStudentsIndexRoute
   '/_app/assessments/results/$id': typeof AppAssessmentsResultsIdRoute
   '/_app/students/$id/edit': typeof AppStudentsIdEditRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/assessments/video'
     | '/profile/$id'
     | '/students/new'
+    | '/timeline/$id'
     | '/students/'
     | '/assessments/results/$id'
     | '/students/$id/edit'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/assessments/video'
     | '/profile/$id'
     | '/students/new'
+    | '/timeline/$id'
     | '/students'
     | '/assessments/results/$id'
     | '/students/$id/edit'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/_app/assessments/video'
     | '/_app/profile/$id'
     | '/_app/students/new'
+    | '/_app/timeline/$id'
     | '/_app/students/'
     | '/_app/assessments/results/$id'
     | '/_app/students/$id/edit'
@@ -330,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStudentsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/timeline/$id': {
+      id: '/_app/timeline/$id'
+      path: '/timeline/$id'
+      fullPath: '/timeline/$id'
+      preLoaderRoute: typeof AppTimelineIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/students/new': {
       id: '/_app/students/new'
       path: '/students/new'
@@ -410,6 +429,7 @@ interface AppRouteChildren {
   AppAssessmentsVideoRoute: typeof AppAssessmentsVideoRoute
   AppProfileIdRoute: typeof AppProfileIdRoute
   AppStudentsNewRoute: typeof AppStudentsNewRoute
+  AppTimelineIdRoute: typeof AppTimelineIdRoute
   AppStudentsIndexRoute: typeof AppStudentsIndexRoute
   AppAssessmentsResultsIdRoute: typeof AppAssessmentsResultsIdRoute
   AppStudentsIdEditRoute: typeof AppStudentsIdEditRoute
@@ -429,6 +449,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAssessmentsVideoRoute: AppAssessmentsVideoRoute,
   AppProfileIdRoute: AppProfileIdRoute,
   AppStudentsNewRoute: AppStudentsNewRoute,
+  AppTimelineIdRoute: AppTimelineIdRoute,
   AppStudentsIndexRoute: AppStudentsIndexRoute,
   AppAssessmentsResultsIdRoute: AppAssessmentsResultsIdRoute,
   AppStudentsIdEditRoute: AppStudentsIdEditRoute,
