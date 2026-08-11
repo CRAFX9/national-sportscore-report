@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSyncRouteImport } from './routes/_app.sync'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
+import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMeRouteImport } from './routes/_app.me'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
@@ -54,6 +55,11 @@ const AppSyncRoute = AppSyncRouteImport.update({
 const AppReportsRoute = AppReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPipelineRoute = AppPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/me': typeof AppMeRoute
   '/notifications': typeof AppNotificationsRoute
+  '/pipeline': typeof AppPipelineRoute
   '/reports': typeof AppReportsRoute
   '/sync': typeof AppSyncRoute
   '/assessments/capture': typeof AppAssessmentsCaptureRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/me': typeof AppMeRoute
   '/notifications': typeof AppNotificationsRoute
+  '/pipeline': typeof AppPipelineRoute
   '/reports': typeof AppReportsRoute
   '/sync': typeof AppSyncRoute
   '/assessments/capture': typeof AppAssessmentsCaptureRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/me': typeof AppMeRoute
   '/_app/notifications': typeof AppNotificationsRoute
+  '/_app/pipeline': typeof AppPipelineRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/sync': typeof AppSyncRoute
   '/_app/assessments/capture': typeof AppAssessmentsCaptureRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/me'
     | '/notifications'
+    | '/pipeline'
     | '/reports'
     | '/sync'
     | '/assessments/capture'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/me'
     | '/notifications'
+    | '/pipeline'
     | '/reports'
     | '/sync'
     | '/assessments/capture'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/me'
     | '/_app/notifications'
+    | '/_app/pipeline'
     | '/_app/reports'
     | '/_app/sync'
     | '/_app/assessments/capture'
@@ -329,6 +341,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pipeline': {
+      id: '/_app/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AppPipelineRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/notifications': {
@@ -460,6 +479,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppMeRoute: typeof AppMeRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
+  AppPipelineRoute: typeof AppPipelineRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSyncRoute: typeof AppSyncRoute
   AppAssessmentsCaptureRoute: typeof AppAssessmentsCaptureRoute
@@ -482,6 +502,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppMeRoute: AppMeRoute,
   AppNotificationsRoute: AppNotificationsRoute,
+  AppPipelineRoute: AppPipelineRoute,
   AppReportsRoute: AppReportsRoute,
   AppSyncRoute: AppSyncRoute,
   AppAssessmentsCaptureRoute: AppAssessmentsCaptureRoute,
