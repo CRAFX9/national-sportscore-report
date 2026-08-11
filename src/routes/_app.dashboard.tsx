@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, ClipboardList, Plus, RefreshCw, Trophy, Users, Award, BarChart3 } from "lucide-react";
+import { Activity, ClipboardList, Plus, RefreshCw, Trophy, Users, Award, BarChart3, Users2, GitBranch } from "lucide-react";
 import { TopBar } from "@/components/nsrc/top-bar";
 import { StatusChip } from "@/components/nsrc/status-chip";
 import { ScoreRing } from "@/components/nsrc/score-ring";
@@ -119,6 +119,12 @@ function PersonalDashboard({ studentId, isParent }: { studentId: string | null; 
           {isParent ? "View full scout profile" : "View my scout profile"}
         </Link>
       </Button>
+
+      <Button asChild variant="outline" className="w-full">
+        <Link to="/timeline/$id" params={{ id: studentId }}>
+          {isParent ? "View performance timeline" : "View my performance timeline"}
+        </Link>
+      </Button>
     </div>
   );
 }
@@ -189,6 +195,21 @@ function StaffDashboard() {
           <Button asChild variant="outline" className="w-full gap-2">
             <Link to="/reports"><BarChart3 className="h-4 w-4" /> Browse all AI reports</Link>
           </Button>
+          {can(role, "viewAllStudents") && (
+            <Button asChild variant="outline" className="w-full gap-2">
+              <Link to="/compare"><Users2 className="h-4 w-4" /> Compare athletes</Link>
+            </Button>
+          )}
+          {can(role, "analytics") && (
+            <>
+              <Button asChild variant="outline" className="w-full gap-2">
+                <Link to="/analytics"><BarChart3 className="h-4 w-4" /> District talent analytics</Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full gap-2">
+                <Link to="/pipeline"><GitBranch className="h-4 w-4" /> Government talent pipeline</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <section>
