@@ -19,6 +19,7 @@ import { Route as AppMeRouteImport } from './routes/_app.me'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCompareRouteImport } from './routes/_app.compare'
 import { Route as AppCoachesRouteImport } from './routes/_app.coaches'
+import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppStudentsIndexRouteImport } from './routes/_app.students.index'
 import { Route as AppTimelineIdRouteImport } from './routes/_app.timeline.$id'
 import { Route as AppStudentsNewRouteImport } from './routes/_app.students.new'
@@ -78,6 +79,11 @@ const AppCompareRoute = AppCompareRouteImport.update({
 const AppCoachesRoute = AppCoachesRouteImport.update({
   id: '/coaches',
   path: '/coaches',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
 const AppStudentsIndexRoute = AppStudentsIndexRouteImport.update({
@@ -141,6 +147,7 @@ const AppAssessmentsResultsIdRoute = AppAssessmentsResultsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/analytics': typeof AppAnalyticsRoute
   '/coaches': typeof AppCoachesRoute
   '/compare': typeof AppCompareRoute
   '/dashboard': typeof AppDashboardRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/analytics': typeof AppAnalyticsRoute
   '/coaches': typeof AppCoachesRoute
   '/compare': typeof AppCompareRoute
   '/dashboard': typeof AppDashboardRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/coaches': typeof AppCoachesRoute
   '/_app/compare': typeof AppCompareRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/analytics'
     | '/coaches'
     | '/compare'
     | '/dashboard'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/analytics'
     | '/coaches'
     | '/compare'
     | '/dashboard'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/analytics'
     | '/_app/coaches'
     | '/_app/compare'
     | '/_app/dashboard'
@@ -354,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCoachesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/analytics': {
+      id: '/_app/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/students/': {
       id: '/_app/students/'
       path: '/students'
@@ -435,6 +454,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppCoachesRoute: typeof AppCoachesRoute
   AppCompareRoute: typeof AppCompareRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -456,6 +476,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAnalyticsRoute: AppAnalyticsRoute,
   AppCoachesRoute: AppCoachesRoute,
   AppCompareRoute: AppCompareRoute,
   AppDashboardRoute: AppDashboardRoute,
